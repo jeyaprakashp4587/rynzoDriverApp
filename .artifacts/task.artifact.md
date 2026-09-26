@@ -1,0 +1,20 @@
+- [x] Dependencies & Configuration
+    - [x] Add DataStore to `libs.versions.toml`
+    - [x] Add DataStore to `app/build.gradle.kts`
+- [x] Data Layer Implementation
+    - [x] Create `DataStoreManager.kt`
+    - [x] Create `AuthInterceptor.kt`
+    - [x] Define Auth DTOs (`AuthRequest`, `AuthResponse`)
+    - [x] Update `ApiService.kt`
+    - [x] Update `LoginRepositoryImpl.kt`
+- [x] Dependency Injection
+    - [x] Create `DataStoreModule.kt`
+    - [x] Update `NetworkModule.kt` (add interceptor)
+- [x] UI Layer (MVVM)
+    - [x] Update `LoginViewModel.kt` (two-step logic)
+    - [x] Update `LoginScreen.kt` (two-step UI)
+    - [x] Create `MainViewModel.kt` (session check)
+    - [x] Update `RootNavGraph.kt` & `MainActivity.kt` (session-aware navigation)
+- [ ] Verification
+    - [ ] Build and Sync
+    - [ ] Manual test: Fresh launch vs. Authenticated launch
