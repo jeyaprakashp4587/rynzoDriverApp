@@ -1,0 +1,6 @@
+- `[x]` Update DTOs (`TripDto`, `CreatedByDto`) to parse API response structure
+- `[x]` Update Domain model (`Trip`) to include customer details and trip metadata
+- `[x]` Update `TripRepositoryImpl` mapping for case-insensitive stop types and customer metadata
+- `[/]` Implement Rapido-style UI in `RequestedTripsCard.kt`
+- `[ ]` Integrate trip request fetching & horizontal scroll view (`LazyRow`) in `HomeScreen.kt`
+- `[ ]` Build and verify project compilation

@@ -7,9 +7,9 @@ import retrofit2.http.GET
 import retrofit2.http.Path
 
 interface TripApiService {
-    @GET("api/trips/getRequestTrips")
+    @GET("api/trips/requests")
     suspend fun getRequestTrips(): Response<TripResponse>
 
-    @GET("api/trips/getParticularRequestedTripDetails/{tripId}")
+    @GET("api/trips/requests/{tripId}")
     suspend fun getParticularRequestedTripDetails(@Path("tripId") tripId: String): Response<ParticularTripResponse>
 }

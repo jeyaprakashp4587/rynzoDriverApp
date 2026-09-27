@@ -4,6 +4,10 @@ data class Trip(
     val id: String,
     val status: String,
     val createdAt: String,
+    val tripType: String?,
+    val tripMode: String?,
+    val customerName: String?,
+    val customerPhone: String?,
     val stops: List<Stop>
 )
 

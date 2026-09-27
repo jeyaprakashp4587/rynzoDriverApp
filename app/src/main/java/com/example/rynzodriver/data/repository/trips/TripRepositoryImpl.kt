@@ -21,12 +21,16 @@ class TripRepositoryImpl @Inject constructor(
                         id = dto.id,
                         status = dto.status,
                         createdAt = dto.createdAt,
+                        tripType = dto.tripType,
+                        tripMode = dto.tripMode,
+                        customerName = dto.createdBy?.name ?: "Unknown Customer",
+                        customerPhone = dto.createdBy?.mobileNumber ?: "",
                         stops = dto.stops.stops.map { stopDto ->
                             Stop(
                                 sequence = stopDto.sequence,
-                                type = when (stopDto.stopType) {
-                                    "PICKUP" -> StopType.PICKUP
-                                    "DROP" -> StopType.DROP
+                                type = when (stopDto.stopType?.lowercase()) {
+                                    "pickup" -> StopType.PICKUP
+                                    "drop" -> StopType.DROP
                                     else -> StopType.UNKNOWN
                                 },
                                 locationName = stopDto.locationName,
