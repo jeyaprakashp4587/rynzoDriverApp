@@ -34,8 +34,7 @@ fun OrdersScreen() {
 @Composable
 fun RequestedTripsCard(
     trip: Trip,
-    onAcceptClick: () -> Unit,
-    onRejectClick: () -> Unit = {},
+    onViewClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -132,28 +131,14 @@ fun RequestedTripsCard(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Action Buttons
-            Row(
+            // Action Button
+            Button(
+                onClick = onViewClick,
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
-                OutlinedButton(
-                    onClick = onRejectClick,
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
-                ) {
-                    Text("Reject")
-                }
-
-                Button(
-                    onClick = onAcceptClick,
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                ) {
-                    Text("Accept")
-                }
+                Text("View")
             }
         }
     }
@@ -224,8 +209,7 @@ fun RequestedRouteSpine(stops: List<Stop>) {
 @Composable
 fun RequestedTripsSection(
     viewModel: TripRequestsViewModel = hiltViewModel(),
-    onAcceptClick: (Trip) -> Unit = {},
-    onRejectClick: (Trip) -> Unit = {},
+    onViewClick: (Trip) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -263,8 +247,7 @@ fun RequestedTripsSection(
                     items(uiState.trips) { trip ->
                         RequestedTripsCard(
                             trip = trip,
-                            onAcceptClick = { onAcceptClick(trip) },
-                            onRejectClick = { onRejectClick(trip) }
+                            onViewClick = { onViewClick(trip) }
                         )
                     }
                 }

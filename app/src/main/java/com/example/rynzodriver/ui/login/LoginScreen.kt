@@ -130,7 +130,7 @@ fun CredentialsSection(
             value = mobile,
             onValueChange = onMobileChange,
             label = "Mobile number",
-            keyboardType = KeyboardType.Phone
+            keyboardType = KeyboardType.Text
         )
 
         Spacer(modifier = Modifier.height(24.dp))

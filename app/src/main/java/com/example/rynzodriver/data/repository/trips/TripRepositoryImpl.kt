@@ -4,6 +4,7 @@ import com.example.rynzodriver.data.api.trips.TripApiService
 import com.example.rynzodriver.domain.model.trips.Stop
 import com.example.rynzodriver.domain.model.trips.StopType
 import com.example.rynzodriver.domain.model.trips.Trip
+import com.example.rynzodriver.domain.model.trips.TripDetail
 import com.example.rynzodriver.domain.repository.trips.TripRepository
 import javax.inject.Inject
 
@@ -43,6 +44,45 @@ class TripRepositoryImpl @Inject constructor(
                 Result.success(trips)
             } else {
                 Result.failure(Exception(response.body()?.message ?: "Failed to fetch trips"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getTripDetails(tripId: String): Result<TripDetail> {
+        return try {
+            val response = tripApiService.getParticularRequestedTripDetails(tripId)
+            if (response.isSuccessful && response.body() != null) {
+                val data = response.body()!!.data
+                val tripDetail = TripDetail(
+                    id = data.id,
+                    status = data.status,
+                    tripType = data.tripType,
+                    createdAt = data.createdAt,
+                    customerName = data.users.firstOrNull()?.user?.name ?: "Customer",
+                    customerPhone = data.users.firstOrNull()?.driver?.mobileNumber ?: "",
+                    driverName = data.users.firstOrNull()?.driver?.name ?: "Driver",
+                    driverPhone = data.users.firstOrNull()?.driver?.mobileNumber ?: "",
+                    vehicleNumber = data.users.firstOrNull()?.vehicle?.vehicleNumber ?: "",
+                    vehicleModel = data.users.firstOrNull()?.vehicle?.vehicleModel ?: "",
+                    stops = data.stops.stops.map { stopDto ->
+                        Stop(
+                            sequence = stopDto.sequence,
+                            type = when (stopDto.stopType?.lowercase()) {
+                                "pickup" -> StopType.PICKUP
+                                "drop" -> StopType.DROP
+                                else -> StopType.UNKNOWN
+                            },
+                            locationName = stopDto.locationName,
+                            latitude = stopDto.coords.coordinates.getOrNull(1) ?: 0.0,
+                            longitude = stopDto.coords.coordinates.getOrNull(0) ?: 0.0
+                        )
+                    }.sortedBy { it.sequence }
+                )
+                Result.success(tripDetail)
+            } else {
+                Result.failure(Exception(response.body()?.message ?: "Failed to fetch trip details"))
             }
         } catch (e: Exception) {
             Result.failure(e)
