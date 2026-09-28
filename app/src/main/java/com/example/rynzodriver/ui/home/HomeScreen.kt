@@ -12,7 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.rynzodriver.ui.orders.RequestedTripDetailBottomSheet
+import com.example.rynzodriver.ui.orders.RequestedTripDetailScreen
 import com.example.rynzodriver.ui.orders.RequestedTripsCard
 import com.example.rynzodriver.ui.permissions.PermissionHandler
 import com.example.rynzodriver.ui.trips.TripRequestsViewModel
@@ -84,12 +84,14 @@ fun HomeScreen(
         }
     }
 
-    RequestedTripDetailBottomSheet(
-        tripDetail = uiState.selectedTripDetail,
-        isLoading = uiState.isDetailLoading,
-        error = uiState.detailError,
-        onDismiss = { viewModel.dismissDetailSheet() },
-        onApprove = { },
-        onReject = { }
-    )
+    if (uiState.selectedTripDetail != null || uiState.isDetailLoading || uiState.detailError != null) {
+        RequestedTripDetailScreen(
+            tripDetail = uiState.selectedTripDetail,
+            isLoading = uiState.isDetailLoading,
+            error = uiState.detailError,
+            onDismiss = { viewModel.dismissDetailSheet() },
+            onApprove = { },
+            onReject = { }
+        )
+    }
 }
