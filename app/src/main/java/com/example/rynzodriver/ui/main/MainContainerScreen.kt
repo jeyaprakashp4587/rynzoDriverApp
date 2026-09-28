@@ -10,8 +10,8 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.*
 import com.example.rynzodriver.ui.home.HomeScreen
 import com.example.rynzodriver.ui.navigation.BottomBarScreen
-import com.example.rynzodriver.ui.orders.OrdersScreen
 import com.example.rynzodriver.ui.profile.ProfileScreen
+import com.example.rynzodriver.ui.trips.OrdersScreen
 
 
 @Composable

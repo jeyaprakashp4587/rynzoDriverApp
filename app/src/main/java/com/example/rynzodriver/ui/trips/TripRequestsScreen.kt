@@ -11,7 +11,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.rynzodriver.ui.trips.components.TripRequestCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,13 +55,24 @@ fun TripRequestsScreen(
                     contentPadding = PaddingValues(16.dp)
                 ) {
                     items(uiState.trips) { trip ->
-                        TripRequestCard(
+                        RequestedTripsCard(
                             trip = trip,
-                            onAcceptClick = { /* Handle accept */ }
+                            onViewClick = { viewModel.fetchTripDetails(trip.id) }
                         )
                     }
                 }
             }
+        }
+
+        if (uiState.selectedTripDetail != null || uiState.isDetailLoading || uiState.detailError != null) {
+            RequestedTripDetailScreen(
+                tripDetail = uiState.selectedTripDetail,
+                isLoading = uiState.isDetailLoading,
+                error = uiState.detailError,
+                onDismiss = { viewModel.dismissDetailSheet() },
+                onApprove = { },
+                onReject = { }
+            )
         }
     }
 }

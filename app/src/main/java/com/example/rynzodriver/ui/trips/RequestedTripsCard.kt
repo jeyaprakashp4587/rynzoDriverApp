@@ -1,4 +1,4 @@
-package com.example.rynzodriver.ui.orders
+package com.example.rynzodriver.ui.trips
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
@@ -22,7 +22,6 @@ import com.example.rynzodriver.domain.model.trips.Stop
 import com.example.rynzodriver.domain.model.trips.StopType
 import com.example.rynzodriver.domain.model.trips.Trip
 import com.example.rynzodriver.ui.theme.UberBlue
-import com.example.rynzodriver.ui.trips.TripRequestsViewModel
 
 @Composable
 fun OrdersScreen() {
@@ -50,7 +49,6 @@ fun RequestedTripsCard(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            // Header: Trip Type & Status
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -85,7 +83,6 @@ fun RequestedTripsCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Customer Info (Rapido Style)
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
@@ -126,12 +123,10 @@ fun RequestedTripsCard(
             Divider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Stops / Route Spine with Coords
             RequestedRouteSpine(stops = trip.stops)
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Action Button
             Button(
                 onClick = onViewClick,
                 modifier = Modifier.fillMaxWidth(),
@@ -247,11 +242,25 @@ fun RequestedTripsSection(
                     items(uiState.trips) { trip ->
                         RequestedTripsCard(
                             trip = trip,
-                            onViewClick = { onViewClick(trip) }
+                            onViewClick = {
+                                onViewClick(trip)
+                                viewModel.fetchTripDetails(trip.id)
+                            }
                         )
                     }
                 }
             }
         }
+    }
+
+    if (uiState.selectedTripDetail != null || uiState.isDetailLoading || uiState.detailError != null) {
+        RequestedTripDetailScreen(
+            tripDetail = uiState.selectedTripDetail,
+            isLoading = uiState.isDetailLoading,
+            error = uiState.detailError,
+            onDismiss = { viewModel.dismissDetailSheet() },
+            onApprove = { },
+            onReject = { }
+        )
     }
 }
