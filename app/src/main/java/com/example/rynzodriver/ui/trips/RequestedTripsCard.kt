@@ -1,32 +1,59 @@
 package com.example.rynzodriver.ui.trips
 
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.rynzodriver.domain.model.trips.Stop
 import com.example.rynzodriver.domain.model.trips.StopType
 import com.example.rynzodriver.domain.model.trips.Trip
-import com.example.rynzodriver.ui.theme.UberBlue
+
+private val CardBackground = Color(0xFFFFFFFF)
+private val CardBlack = Color(0xFF000000)
+private val CardLightGray = Color(0xFFF3F3F3)
+private val CardDivider = Color(0xFFEAEAEA)
+private val CardGray = Color(0xFF6B6B6B)
 
 @Composable
 fun OrdersScreen() {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(text = "Orders Screen Placeholder")
+        Text(text = "Orders Screen Placeholder", color = CardBlack)
     }
 }
 
@@ -36,104 +63,121 @@ fun RequestedTripsCard(
     onViewClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    Surface(
         modifier = modifier
             .width(320.dp)
-            .padding(8.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+            .padding(vertical = 6.dp),
+        shape = RoundedCornerShape(12.dp),
+        color = CardBackground,
+        border = BorderStroke(1.dp, CardDivider),
+        shadowElevation = 2.dp
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
+        Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Surface(
-                    shape = RoundedCornerShape(6.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer
-                ) {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = (trip.tripType ?: "Trip").uppercase(),
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        fontWeight = FontWeight.Bold
+                        text = "Trip request",
+                        color = CardGray,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        text = trip.tripType
+                            ?.replace("_", " ")
+                            ?.lowercase()
+                            ?.replaceFirstChar { it.titlecase() }
+                            ?: "Trip",
+                        color = CardBlack,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
-
-                Surface(
-                    shape = RoundedCornerShape(6.dp),
-                    color = Color(0xFFE8F5E9)
-                ) {
+                Spacer(Modifier.width(12.dp))
+                Surface(color = CardLightGray, shape = RoundedCornerShape(50)) {
                     Text(
-                        text = trip.status.uppercase(),
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color(0xFF2E7D32),
-                        fontWeight = FontWeight.Bold
+                        text = trip.status
+                            .replace("_", " ")
+                            .lowercase()
+                            .replaceFirstChar { it.titlecase() },
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                        color = CardBlack,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(Modifier.height(16.dp))
+
+            RequestedRouteSpine(stops = trip.stops)
+
+            Spacer(Modifier.height(14.dp))
+            HorizontalDivider(color = CardDivider, thickness = 1.dp)
+            Spacer(Modifier.height(14.dp))
 
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Surface(
-                    shape = RoundedCornerShape(24.dp),
-                    color = MaterialTheme.colorScheme.secondaryContainer,
+                    shape = CircleShape,
+                    color = CardLightGray,
                     modifier = Modifier.size(40.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
                             imageVector = Icons.Default.Person,
-                            contentDescription = "Customer",
-                            tint = MaterialTheme.colorScheme.onSecondaryContainer
+                            contentDescription = null,
+                            tint = CardBlack,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }
-
-                Spacer(modifier = Modifier.width(12.dp))
-
+                Spacer(Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = trip.customerName ?: "Customer",
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Bold
+                        color = CardBlack,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
-                    if (!trip.customerPhone.isNullOrEmpty()) {
+                    val phone = trip.customerPhone
+                    if (!phone.isNullOrEmpty()) {
                         Text(
-                            text = trip.customerPhone,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                            text = phone,
+                            color = CardGray,
+                            fontSize = 13.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-            Divider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
-            Spacer(modifier = Modifier.height(16.dp))
-
-            RequestedRouteSpine(stops = trip.stops)
-
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(Modifier.height(16.dp))
 
             Button(
                 onClick = onViewClick,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
                 shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                elevation = null,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = CardBlack,
+                    contentColor = CardBackground
+                )
             ) {
-                Text("View")
+                Text("View", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
             }
         }
     }
@@ -141,62 +185,91 @@ fun RequestedTripsCard(
 
 @Composable
 fun RequestedRouteSpine(stops: List<Stop>) {
-    Column {
-        stops.forEachIndexed { index, stop ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.Top
-            ) {
+    val visibleStops = stops.take(2)
+    val hiddenCount = stops.size - visibleStops.size
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        visibleStops.forEachIndexed { index, stop ->
+            RouteStopRow(
+                stop = stop,
+                showConnector = index < visibleStops.lastIndex || hiddenCount > 0
+            )
+        }
+        if (hiddenCount > 0) {
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.width(20.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(6.dp)
+                            .background(CardBlack.copy(alpha = 0.35f), CircleShape)
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+                Text(
+                    text = if (hiddenCount == 1) "1 more stop" else "$hiddenCount more stops",
+                    color = CardGray,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun RouteStopRow(stop: Stop, showConnector: Boolean) {
+    val isPickup = stop.type == StopType.PICKUP
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(IntrinsicSize.Min)
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .width(20.dp)
+                .fillMaxHeight()
+        ) {
+            Spacer(Modifier.height(5.dp))
+            Box(
+                modifier = Modifier
+                    .size(10.dp)
+                    .background(CardBlack, if (isPickup) CircleShape else RoundedCornerShape(2.dp))
+            )
+            if (showConnector) {
                 Box(
                     modifier = Modifier
-                        .width(24.dp)
-                        .height(56.dp),
-                    contentAlignment = Alignment.TopCenter
-                ) {
-                    val color = if (stop.type == StopType.PICKUP) UberBlue else Color(0xFFD32F2F)
-
-                    Canvas(modifier = Modifier.fillMaxSize()) {
-                        drawCircle(
-                            color = color,
-                            radius = 5.dp.toPx(),
-                            center = Offset(size.width / 2, 8.dp.toPx())
-                        )
-
-                        if (index < stops.size - 1) {
-                            drawLine(
-                                color = Color.LightGray,
-                                start = Offset(size.width / 2, 13.dp.toPx()),
-                                end = Offset(size.width / 2, size.height),
-                                strokeWidth = 2.dp.toPx()
-                            )
-                        }
-                    }
-                }
-
-                Column(
-                    modifier = Modifier
-                        .padding(start = 8.dp)
+                        .width(1.5.dp)
                         .weight(1f)
-                ) {
-                    Text(
-                        text = if (stop.type == StopType.PICKUP) "PICKUP" else "DROP-OFF",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color.Gray,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = stop.locationName,
-                        style = MaterialTheme.typography.bodyMedium,
-                        maxLines = 2,
-                        fontWeight = FontWeight.Medium
-                    )
-                    Text(
-                        text = "Lat: ${String.format("%.4f", stop.latitude)}, Lng: ${String.format("%.4f", stop.longitude)}",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    )
-                }
+                        .background(CardBlack.copy(alpha = 0.25f))
+                )
             }
+        }
+        Spacer(Modifier.width(12.dp))
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(bottom = if (showConnector) 14.dp else 0.dp)
+        ) {
+            Text(
+                text = if (isPickup) "Pickup" else "Drop-off",
+                color = CardGray,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = stop.locationName,
+                color = CardBlack,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }
@@ -213,54 +286,77 @@ fun RequestedTripsSection(
         modifier = modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center
     ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                text = "Trip Requests",
+                color = CardBlack,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(start = 16.dp, top = 8.dp, bottom = 8.dp)
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+        }
+
         when {
             uiState.isLoading -> {
-                CircularProgressIndicator()
+                CircularProgressIndicator(
+                    color = CardBlack,
+                    trackColor = CardLightGray,
+                    strokeWidth = 3.dp
+                )
             }
+
             uiState.error != null -> {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(text = uiState.error!!, color = MaterialTheme.colorScheme.error)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Button(onClick = { viewModel.fetchTripRequests() }) {
-                        Text("Retry")
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = uiState.error!!,
+                        color = CardBlack,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    Button(
+                        onClick = { viewModel.fetchTripRequests() },
+                        shape = RoundedCornerShape(10.dp),
+                        elevation = null,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = CardBlack,
+                            contentColor = CardBackground
+                        )
+                    ) {
+                        Text("Retry", fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
+
             uiState.trips.isEmpty() -> {
                 Text(
                     text = "No trip requests available",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    color = CardGray,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(24.dp)
                 )
             }
+
             else -> {
                 LazyRow(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    contentPadding = PaddingValues(horizontal = 4.dp)
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
                 ) {
                     items(uiState.trips) { trip ->
                         RequestedTripsCard(
                             trip = trip,
-                            onViewClick = {
-                                onViewClick(trip)
-                                viewModel.fetchTripDetails(trip.id)
-                            }
+                            onViewClick = { onViewClick(trip) }
                         )
                     }
                 }
             }
         }
-    }
-
-    if (uiState.selectedTripDetail != null || uiState.isDetailLoading || uiState.detailError != null) {
-        RequestedTripDetailScreen(
-            tripDetail = uiState.selectedTripDetail,
-            isLoading = uiState.isDetailLoading,
-            error = uiState.detailError,
-            onDismiss = { viewModel.dismissDetailSheet() },
-            onApprove = { },
-            onReject = { }
-        )
     }
 }

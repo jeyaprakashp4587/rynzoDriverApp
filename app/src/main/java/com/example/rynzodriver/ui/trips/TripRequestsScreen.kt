@@ -15,7 +15,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TripRequestsScreen(
-    viewModel: TripRequestsViewModel = hiltViewModel()
+    viewModel: TripRequestsViewModel = hiltViewModel(),
+    onViewTripDetail: (String) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -57,22 +58,11 @@ fun TripRequestsScreen(
                     items(uiState.trips) { trip ->
                         RequestedTripsCard(
                             trip = trip,
-                            onViewClick = { viewModel.fetchTripDetails(trip.id) }
+                            onViewClick = { onViewTripDetail(trip.id) }
                         )
                     }
                 }
             }
-        }
-
-        if (uiState.selectedTripDetail != null || uiState.isDetailLoading || uiState.detailError != null) {
-            RequestedTripDetailScreen(
-                tripDetail = uiState.selectedTripDetail,
-                isLoading = uiState.isDetailLoading,
-                error = uiState.detailError,
-                onDismiss = { viewModel.dismissDetailSheet() },
-                onApprove = { },
-                onReject = { }
-            )
         }
     }
 }

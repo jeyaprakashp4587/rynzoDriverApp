@@ -11,6 +11,9 @@ sealed class Screen(val route: String) {
     object Login : Screen("login")
     object MainContainer : Screen("main_container")
     object TripRequests : Screen("trip_requests")
+    object TripDetail : Screen("trip_detail/{tripId}") {
+        fun createRoute(tripId: String) = "trip_detail/$tripId"
+    }
 }
 
 sealed class BottomBarScreen(

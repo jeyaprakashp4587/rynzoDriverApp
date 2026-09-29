@@ -5,6 +5,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.*
@@ -15,7 +16,10 @@ import com.example.rynzodriver.ui.trips.OrdersScreen
 
 
 @Composable
-fun MainContainerScreen(onTripRequestsClick: () -> Unit) {
+fun MainContainerScreen(
+    onTripRequestsClick: () -> Unit,
+    onTripDetailClick: (String) -> Unit = {}
+) {
     val navController = rememberNavController()
     val screens = listOf(
         BottomBarScreen.Home,
@@ -25,7 +29,10 @@ fun MainContainerScreen(onTripRequestsClick: () -> Unit) {
 
     Scaffold(
         bottomBar = {
-            NavigationBar {
+            NavigationBar(
+                containerColor = MaterialTheme.colorScheme.surface,
+                tonalElevation = 0.dp
+            ) {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentDestination = navBackStackEntry?.destination
 
@@ -34,6 +41,13 @@ fun MainContainerScreen(onTripRequestsClick: () -> Unit) {
                         label = { Text(screen.title) },
                         icon = { Icon(screen.icon, contentDescription = screen.title) },
                         selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.12f)
+                        ),
                         onClick = {
                             navController.navigate(screen.route) {
                                 popUpTo(navController.graph.findStartDestination().id) {
@@ -53,8 +67,11 @@ fun MainContainerScreen(onTripRequestsClick: () -> Unit) {
             startDestination = BottomBarScreen.Home.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable(BottomBarScreen.Home.route) { 
-                HomeScreen(onViewRequestsClick = onTripRequestsClick) 
+            composable(BottomBarScreen.Home.route) {
+                HomeScreen(
+                    onViewRequestsClick = onTripRequestsClick,
+                    onViewTripClick = { tripId -> onTripDetailClick(tripId) }
+                )
             }
             composable(BottomBarScreen.Orders.route) { OrdersScreen() }
             composable(BottomBarScreen.Profile.route) { ProfileScreen() }

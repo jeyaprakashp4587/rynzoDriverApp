@@ -19,6 +19,8 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // Read GEOCODING_API_KEY from local.properties (add: GEOCODING_API_KEY=your_key)
+        buildConfigField("String", "GEOCODING_API_KEY", "\"${project.findProperty("GEOCODING_API_KEY") ?: ""}\"")
     }
 
     buildTypes {
@@ -39,6 +41,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

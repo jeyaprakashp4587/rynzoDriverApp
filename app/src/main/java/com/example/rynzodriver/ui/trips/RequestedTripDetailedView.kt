@@ -1,15 +1,15 @@
-package com.example.rynzodriver.ui.orders
+package com.example.rynzodriver.ui.trips
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -25,22 +25,16 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -53,17 +47,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import com.example.rynzodriver.domain.model.trips.Stop
 import com.example.rynzodriver.domain.model.trips.StopType
 import com.example.rynzodriver.domain.model.trips.TripDetail
-import com.example.rynzodriver.domain.model.trips.TripStop
 import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -77,13 +75,11 @@ import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
 
-private val RapidoYellow = Color(0xFFFFD60A)
-private val Ink = Color(0xFF14141F)
-private val InkSoft = Color(0xFF6B6F7B)
-private val Surface1 = Color(0xFFF6F7F9)
-private val Stroke = Color(0xFFE9EBEF)
-private val PickupGreen = Color(0xFF1FAB57)
-private val DropRed = Color(0xFFE5484D)
+private val AppBackground = Color(0xFFFFFFFF)
+private val AppBlack = Color(0xFF000000)
+private val AppLightGray = Color(0xFFF3F3F3)
+private val AppDivider = Color(0xFFEAEAEA)
+private val AppGray = Color(0xFF6B6B6B)
 private val DefaultCenter = LatLng(13.0827, 80.2707)
 
 private const val LIGHT_MAP_STYLE = """
@@ -117,13 +113,14 @@ fun RequestedTripDetailScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(AppBackground)
     ) {
         when {
             isLoading -> CircularProgressIndicator(
                 modifier = Modifier.align(Alignment.Center),
-                color = RapidoYellow,
-                trackColor = Stroke
+                color = AppBlack,
+                trackColor = AppLightGray,
+                strokeWidth = 3.dp
             )
 
             error != null -> ErrorState(
@@ -142,7 +139,6 @@ fun RequestedTripDetailScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RequestedTripDetailBottomSheet(
     tripDetail: TripDetail?,
@@ -154,12 +150,13 @@ fun RequestedTripDetailBottomSheet(
 ) {
     if (tripDetail == null && !isLoading && error == null) return
 
-    ModalBottomSheet(
+    Dialog(
         onDismissRequest = onDismiss,
-        containerColor = Color.White,
-        shape = RectangleShape,
-        dragHandle = null,
-        windowInsets = WindowInsets(0)
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false,
+            dismissOnClickOutside = false
+        )
     ) {
         RequestedTripDetailScreen(
             tripDetail = tripDetail,
@@ -180,17 +177,20 @@ private fun ErrorState(message: String, onDismiss: () -> Unit, modifier: Modifie
     ) {
         Text(
             text = message,
-            color = DropRed,
-            fontSize = 15.sp,
+            color = AppBlack,
+            fontSize = 16.sp,
             fontWeight = FontWeight.Medium
         )
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(20.dp))
         Button(
             onClick = onDismiss,
-            shape = RoundedCornerShape(14.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = RapidoYellow, contentColor = Ink)
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            shape = RoundedCornerShape(10.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = AppBlack, contentColor = AppBackground)
         ) {
-            Text("Close", fontWeight = FontWeight.Bold)
+            Text("Close", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
         }
     }
 }
@@ -202,6 +202,23 @@ private fun TripContent(
     onApprove: () -> Unit,
     onReject: () -> Unit
 ) {
+    if (trip.stops.isEmpty()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(AppBackground),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "No route data available",
+                color = AppGray,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium
+            )
+        }
+        return
+    }
+
     val points = remember(trip) { trip.stops.map { LatLng(it.latitude, it.longitude) } }
     val camera = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(points.firstOrNull() ?: DefaultCenter, 13f)
@@ -214,12 +231,12 @@ private fun TripContent(
             camera.animate(CameraUpdateFactory.newLatLngZoom(points.first(), 15f))
         } else {
             val bounds = LatLngBounds.builder().apply { points.forEach(::include) }.build()
-            camera.animate(CameraUpdateFactory.newLatLngBounds(bounds, 120))
+            camera.animate(CameraUpdateFactory.newLatLngBounds(bounds, 100))
         }
     }
 
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-        val sheetMaxHeight = maxHeight * 0.58f
+        val sheetMaxHeight = maxHeight * 0.55f
 
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
@@ -238,17 +255,19 @@ private fun TripContent(
             onMapLoaded = { mapLoaded = true }
         ) {
             if (points.size > 1) {
-                Polyline(points = points, color = Ink, width = 8f)
+                Polyline(
+                    points = points,
+                    color = AppBlack,
+                    width = 7f
+                )
             }
             trip.stops.forEachIndexed { index, stop ->
-                val isPickup = stop.type == StopType.PICKUP
+                val markerColor = if (stop.type == StopType.PICKUP) BitmapDescriptorFactory.HUE_GREEN else BitmapDescriptorFactory.HUE_RED
                 Marker(
                     state = MarkerState(position = points[index]),
                     title = stop.locationName,
-                    snippet = if (isPickup) "Pickup" else "Drop-off",
-                    icon = BitmapDescriptorFactory.defaultMarker(
-                        if (isPickup) BitmapDescriptorFactory.HUE_GREEN else BitmapDescriptorFactory.HUE_RED
-                    )
+                    snippet = if (stop.type == StopType.PICKUP) "Pickup" else "Drop-off",
+                    icon = BitmapDescriptorFactory.defaultMarker(markerColor)
                 )
             }
         }
@@ -259,9 +278,9 @@ private fun TripContent(
                 .align(Alignment.TopStart)
                 .statusBarsPadding()
                 .padding(16.dp)
-                .shadow(6.dp, CircleShape)
-                .size(42.dp),
-            colors = IconButtonDefaults.iconButtonColors(containerColor = Color.White, contentColor = Ink)
+                .shadow(4.dp, CircleShape)
+                .size(40.dp),
+            colors = IconButtonDefaults.iconButtonColors(containerColor = AppBackground, contentColor = AppBlack)
         ) {
             Icon(Icons.Default.Close, contentDescription = "Close", modifier = Modifier.size(20.dp))
         }
@@ -271,9 +290,9 @@ private fun TripContent(
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
                 .heightIn(max = sheetMaxHeight),
-            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-            color = Color.White,
-            shadowElevation = 16.dp
+            shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+            color = AppBackground,
+            shadowElevation = 12.dp
         ) {
             Column {
                 Column(
@@ -284,26 +303,29 @@ private fun TripContent(
                 ) {
                     Box(
                         modifier = Modifier
-                            .padding(top = 10.dp, bottom = 16.dp)
+                            .padding(top = 8.dp, bottom = 16.dp)
                             .align(Alignment.CenterHorizontally)
-                            .width(40.dp)
+                            .width(36.dp)
                             .height(4.dp)
-                            .background(Stroke, RoundedCornerShape(50))
+                            .background(AppDivider, RoundedCornerShape(50))
                     )
 
                     TripHeader(trip = trip)
 
-                    Spacer(Modifier.height(16.dp))
+                    Spacer(Modifier.height(20.dp))
 
-                    PeopleCard(trip = trip)
-
-                    Spacer(Modifier.height(16.dp))
-
-                    RouteCard(stops = trip.stops)
+                    RouteSection(stops = trip.stops)
 
                     Spacer(Modifier.height(16.dp))
+
+                    HorizontalDivider(color = AppDivider, thickness = 1.dp)
+
+                    CustomerRow(trip = trip)
+
+                    Spacer(Modifier.height(4.dp))
                 }
 
+                HorizontalDivider(color = AppDivider, thickness = 1.dp)
                 ActionBar(onApprove = onApprove, onReject = onReject)
             }
         }
@@ -320,8 +342,8 @@ private fun TripHeader(trip: TripDetail) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = "New trip request",
-                color = InkSoft,
-                fontSize = 12.sp,
+                color = AppGray,
+                fontSize = 13.sp,
                 fontWeight = FontWeight.Medium
             )
             Spacer(Modifier.height(2.dp))
@@ -331,85 +353,58 @@ private fun TripHeader(trip: TripDetail) {
                     ?.lowercase()
                     ?.replaceFirstChar { it.titlecase() }
                     ?: "Trip",
-                color = Ink,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.ExtraBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-        Surface(color = RapidoYellow.copy(alpha = 0.22f), shape = RoundedCornerShape(50)) {
-            Text(
-                text = trip.status,
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                color = Ink,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
-    }
-}
-
-@Composable
-private fun PeopleCard(trip: TripDetail) {
-    Surface(
-        shape = RoundedCornerShape(18.dp),
-        color = Surface1,
-        border = BorderStroke(1.dp, Stroke)
-    ) {
-        Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 4.dp)) {
-            InfoRow(
-                icon = Icons.Default.Person,
-                label = "Customer",
-                title = trip.customerName ?: "Customer",
-                subtitle = trip.customerPhone ?: "No contact"
-            )
-            HorizontalDivider(color = Stroke)
-            InfoRow(
-                icon = Icons.Default.DirectionsCar,
-                label = "Vehicle",
-                title = trip.vehicleNumber ?: "Vehicle",
-                subtitle = trip.vehicleModel ?: "Vehicle model"
-            )
-            HorizontalDivider(color = Stroke)
-            InfoRow(
-                icon = Icons.Default.Phone,
-                label = "Driver",
-                title = trip.driverName ?: "Driver",
-                subtitle = trip.driverPhone ?: "No driver contact"
-            )
-        }
-    }
-}
-
-@Composable
-private fun InfoRow(icon: ImageVector, label: String, title: String, subtitle: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Surface(color = RapidoYellow, shape = CircleShape, modifier = Modifier.size(40.dp)) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(icon, contentDescription = null, tint = Ink, modifier = Modifier.size(20.dp))
-            }
-        }
-        Spacer(Modifier.width(12.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(text = label, color = InkSoft, fontSize = 11.sp, fontWeight = FontWeight.Medium)
-            Text(
-                text = title,
-                color = Ink,
-                fontSize = 15.sp,
+                color = AppBlack,
+                fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
+        }
+        Spacer(Modifier.width(12.dp))
+        Surface(color = AppLightGray, shape = RoundedCornerShape(50)) {
             Text(
-                text = subtitle,
-                color = InkSoft,
-                fontSize = 13.sp,
+                text = trip.status,
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                color = AppBlack,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+    }
+}
+
+@Composable
+private fun CustomerRow(trip: TripDetail) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Surface(color = AppLightGray, shape = CircleShape, modifier = Modifier.size(44.dp)) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = null,
+                    tint = AppBlack,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+        }
+        Spacer(Modifier.width(14.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = trip.customerName ?: "Customer",
+                color = AppBlack,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                text = trip.customerPhone ?: "No contact",
+                color = AppGray,
+                fontSize = 14.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -418,75 +413,65 @@ private fun InfoRow(icon: ImageVector, label: String, title: String, subtitle: S
 }
 
 @Composable
-private fun RouteCard(stops: List<TripStop>) {
+private fun RouteSection(stops: List<Stop>) {
     var expanded by remember { mutableStateOf(false) }
     val collapsible = stops.size > 2
     val visibleStops = if (collapsible && !expanded) stops.take(2) else stops
 
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        color = Color.White,
-        border = BorderStroke(1.dp, Stroke)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = "Route",
-                color = Ink,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.ExtraBold
-            )
-            Spacer(Modifier.height(14.dp))
+    Column(modifier = Modifier.fillMaxWidth()) {
+        visibleStops.forEachIndexed { index, stop ->
+            StopRow(stop = stop, isLast = index == visibleStops.lastIndex)
+        }
 
-            visibleStops.forEachIndexed { index, stop ->
-                StopRow(stop = stop, isLast = index == visibleStops.lastIndex)
-            }
-
-            if (collapsible) {
-                TextButton(
-                    onClick = { expanded = !expanded },
-                    contentPadding = PaddingValues(0.dp)
-                ) {
-                    Text(
-                        text = if (expanded) "Show less" else "${stops.size - 2} more stops",
-                        color = Ink,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 13.sp
-                    )
-                    Icon(
-                        imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                        contentDescription = null,
-                        tint = Ink,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
+        if (collapsible) {
+            TextButton(
+                onClick = { expanded = !expanded },
+                contentPadding = PaddingValues(start = 32.dp, top = 4.dp, bottom = 4.dp, end = 8.dp)
+            ) {
+                Text(
+                    text = if (expanded) "Show less" else "${stops.size - 2} more stops",
+                    color = AppBlack,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 14.sp
+                )
+                Icon(
+                    imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                    contentDescription = null,
+                    tint = AppBlack,
+                    modifier = Modifier.size(18.dp)
+                )
             }
         }
     }
 }
 
 @Composable
-private fun StopRow(stop: TripStop, isLast: Boolean) {
+private fun StopRow(stop: Stop, isLast: Boolean) {
     val isPickup = stop.type == StopType.PICKUP
-    val color = if (isPickup) PickupGreen else DropRed
 
-    Row(modifier = Modifier.fillMaxWidth()) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(IntrinsicSize.Min)
+    ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.width(20.dp)
+            modifier = Modifier
+                .width(20.dp)
+                .fillMaxHeight()
         ) {
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(5.dp))
             Box(
                 modifier = Modifier
-                    .size(12.dp)
-                    .background(color, if (isPickup) CircleShape else RoundedCornerShape(3.dp))
+                    .size(10.dp)
+                    .background(AppBlack, if (isPickup) CircleShape else RoundedCornerShape(2.dp))
             )
             if (!isLast) {
                 Box(
                     modifier = Modifier
-                        .width(2.dp)
-                        .height(36.dp)
-                        .background(Stroke)
+                        .width(1.5.dp)
+                        .weight(1f)
+                        .background(AppBlack.copy(alpha = 0.25f))
                 )
             }
         }
@@ -494,19 +479,20 @@ private fun StopRow(stop: TripStop, isLast: Boolean) {
         Column(
             modifier = Modifier
                 .weight(1f)
-                .padding(bottom = if (isLast) 0.dp else 14.dp)
+                .padding(bottom = if (isLast) 0.dp else 18.dp)
         ) {
             Text(
                 text = if (isPickup) "Pickup" else "Drop-off",
-                color = color,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold
+                color = AppGray,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium
             )
+            Spacer(Modifier.height(2.dp))
             Text(
                 text = stop.locationName,
-                color = Ink,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
+                color = AppBlack,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
@@ -516,35 +502,35 @@ private fun StopRow(stop: TripStop, isLast: Boolean) {
 
 @Composable
 private fun ActionBar(onApprove: () -> Unit, onReject: () -> Unit) {
-    Surface(color = Color.White, shadowElevation = 8.dp) {
-        Row(
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(AppBackground)
+            .navigationBarsPadding()
+            .padding(horizontal = 20.dp, vertical = 14.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Button(
+            onClick = onReject,
             modifier = Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .padding(horizontal = 20.dp, vertical = 14.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                .weight(1f)
+                .height(52.dp),
+            shape = RoundedCornerShape(10.dp),
+            elevation = null,
+            colors = ButtonDefaults.buttonColors(containerColor = AppLightGray, contentColor = AppBlack)
         ) {
-            OutlinedButton(
-                onClick = onReject,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(52.dp),
-                shape = RoundedCornerShape(16.dp),
-                border = BorderStroke(1.5.dp, Ink),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = Ink)
-            ) {
-                Text("Reject", fontSize = 15.sp, fontWeight = FontWeight.Bold)
-            }
-            Button(
-                onClick = onApprove,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(52.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = RapidoYellow, contentColor = Ink)
-            ) {
-                Text("Approve", fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
-            }
+            Text("Reject", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+        }
+        Button(
+            onClick = onApprove,
+            modifier = Modifier
+                .weight(1f)
+                .height(52.dp),
+            shape = RoundedCornerShape(10.dp),
+            elevation = null,
+            colors = ButtonDefaults.buttonColors(containerColor = AppBlack, contentColor = AppBackground)
+        ) {
+            Text("Approve", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
         }
     }
 }
