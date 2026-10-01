@@ -16,9 +16,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -36,7 +39,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.runtime.LaunchedEffect
 
 private val HeaderBlue = Color(0xFF4580F4)
 private val HeaderWhite = Color(0xFFFFFFFF)
@@ -53,6 +55,8 @@ fun TopSection(
     onDutyChange: (Boolean) -> Unit,
     onNotificationsClick: () -> Unit = {},
     locationName: String? = null,
+    selectedVehicleName: String? = null,
+    onSelectVehicleClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var resolvedLocation by remember { mutableStateOf(locationName) }
@@ -184,6 +188,51 @@ fun TopSection(
                             uncheckedTrackColor = OfflineGray,
                             uncheckedBorderColor = OfflineGray
                         )
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            OutlinedButton(
+                onClick = onSelectVehicleClick,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = HeaderWhite,
+                    contentColor = HeaderBlue
+                ),
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    HeaderWhite.copy(alpha = 0.5f)
+                )
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.DirectionsCar,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = selectedVehicleName ?: "Select vehicle",
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+
+                    Text(
+                        text = "Change",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
