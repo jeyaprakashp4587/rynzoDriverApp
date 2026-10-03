@@ -52,45 +52,7 @@ fun RootNavGraph(
             })
         }
         composable(Screen.MainContainer.route) {
-            MainContainerScreen(
-                onTripRequestsClick = {
-                    navController.navigate(Screen.TripRequests.route)
-                },
-                onTripDetailClick = { tripId ->
-                    navController.navigate(Screen.TripDetail.createRoute(tripId))
-                }
-            )
-        }
-        composable(Screen.TripRequests.route) {
-            TripRequestsScreen(
-                onViewTripDetail = { tripId ->
-                    navController.navigate(Screen.TripDetail.createRoute(tripId))
-                }
-            )
-        }
-        composable(
-            route = Screen.TripDetail.route,
-            arguments = listOf(navArgument("tripId") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val tripId = backStackEntry.arguments?.getString("tripId") ?: return@composable
-            val tripViewModel: com.example.rynzodriver.ui.trips.TripRequestsViewModel = hiltViewModel()
-            val uiState by tripViewModel.uiState.collectAsState()
-
-            LaunchedEffect(tripId) {
-                tripViewModel.fetchTripDetails(tripId)
-            }
-
-            RequestedTripDetailScreen(
-                tripDetail = uiState.selectedTripDetail,
-                isLoading = uiState.isDetailLoading,
-                error = uiState.detailError,
-                onDismiss = {
-                    tripViewModel.dismissDetailSheet()
-                    navController.popBackStack()
-                },
-                onApprove = { },
-                onReject = { }
-            )
+            MainContainerScreen()
         }
     }
 }

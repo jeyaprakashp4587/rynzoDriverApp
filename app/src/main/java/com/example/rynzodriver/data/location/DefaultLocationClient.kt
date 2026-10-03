@@ -36,7 +36,7 @@ class DefaultLocationClient(
             }
 
             val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, interval)
-                .setMinUpdateDistanceMeters(5f) // Battery efficient: distance filter
+                .setMinUpdateDistanceMeters(5f) 
                 .build()
 
             val locationCallback = object : LocationCallback() {

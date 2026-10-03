@@ -40,10 +40,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -101,13 +103,22 @@ private const val LIGHT_MAP_STYLE = """
 
 @Composable
 fun RequestedTripDetailScreen(
-    tripDetail: TripDetail?,
-    isLoading: Boolean,
-    error: String?,
+    tripId: String,
+    viewModel: TripRequestsViewModel = hiltViewModel(),
     onDismiss: () -> Unit,
     onApprove: () -> Unit,
     onReject: () -> Unit
 ) {
+    val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(tripId) {
+        viewModel.fetchTripDetails(tripId)
+    }
+
+    val tripDetail = uiState.selectedTripDetail
+    val isLoading = uiState.isDetailLoading
+    val error = uiState.detailError
+
     if (tripDetail == null && !isLoading && error == null) return
 
     Box(
@@ -141,15 +152,12 @@ fun RequestedTripDetailScreen(
 
 @Composable
 fun RequestedTripDetailBottomSheet(
-    tripDetail: TripDetail?,
-    isLoading: Boolean,
-    error: String?,
+    tripId: String,
+    viewModel: TripRequestsViewModel = hiltViewModel(),
     onDismiss: () -> Unit,
     onApprove: () -> Unit,
     onReject: () -> Unit
 ) {
-    if (tripDetail == null && !isLoading && error == null) return
-
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(
@@ -159,9 +167,8 @@ fun RequestedTripDetailBottomSheet(
         )
     ) {
         RequestedTripDetailScreen(
-            tripDetail = tripDetail,
-            isLoading = isLoading,
-            error = error,
+            tripId = tripId,
+            viewModel = viewModel,
             onDismiss = onDismiss,
             onApprove = onApprove,
             onReject = onReject

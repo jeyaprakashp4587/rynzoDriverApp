@@ -4,6 +4,7 @@ import com.example.rynzodriver.data.api.ApiService
 import com.example.rynzodriver.data.api.AuthInterceptor
 import com.example.rynzodriver.data.api.auth.AuthApiService
 import com.example.rynzodriver.data.api.trips.TripApiService
+import com.google.gson.Gson
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -17,6 +18,12 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
+
+    @Provides
+    @Singleton
+    fun provideGson(): Gson {
+        return Gson()
+    }
 
     @Provides
     @Singleton

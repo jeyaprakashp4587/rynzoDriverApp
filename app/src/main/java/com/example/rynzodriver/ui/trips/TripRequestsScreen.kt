@@ -11,12 +11,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
+import com.example.rynzodriver.ui.navigation.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TripRequestsScreen(
-    viewModel: TripRequestsViewModel = hiltViewModel(),
-    onViewTripDetail: (String) -> Unit = {}
+    navController: NavController,
+    viewModel: TripRequestsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -58,7 +60,9 @@ fun TripRequestsScreen(
                     items(uiState.trips) { trip ->
                         RequestedTripsCard(
                             trip = trip,
-                            onViewClick = { onViewTripDetail(trip.id) }
+                            onViewClick = {
+                                navController.navigate(Screen.TripDetail.createRoute(trip.id))
+                            }
                         )
                     }
                 }

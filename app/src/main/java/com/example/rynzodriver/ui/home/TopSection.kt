@@ -1,5 +1,7 @@
 package com.example.rynzodriver.ui.home
 
+import android.annotation.SuppressLint
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -27,6 +29,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,10 +38,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import com.google.android.gms.tasks.CancellationTokenSource
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
 
 private val HeaderBlue = Color(0xFF4580F4)
 private val HeaderWhite = Color(0xFFFFFFFF)
@@ -54,12 +63,21 @@ fun TopSection(
     isOnDuty: Boolean,
     onDutyChange: (Boolean) -> Unit,
     onNotificationsClick: () -> Unit = {},
-    locationName: String? = null,
     selectedVehicleName: String? = null,
     onSelectVehicleClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    var resolvedLocation by remember { mutableStateOf(locationName) }
+    val context = LocalContext.current
+    var resolvedLocation by remember { mutableStateOf<String?>(null) }
+    val currentLocation = resolvedLocation?.takeIf { it.isNotBlank() }
+
+    LaunchedEffect(isOnDuty) {
+        resolvedLocation = if (isOnDuty) {
+            getCurrentCoordinates(context)
+        } else {
+            null
+        }
+    }
 
     Surface(
         modifier = modifier.fillMaxWidth(),
@@ -237,37 +255,65 @@ fun TopSection(
                 }
             }
 
-            if (isOnDuty) {
-                LocationProvider(fetchWhen = true) { addr ->
-                    resolvedLocation = addr ?: locationName
-                    if (!resolvedLocation.isNullOrBlank()) {
-                        Spacer(Modifier.height(12.dp))
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(HeaderWhite.copy(alpha = 0.16f), RoundedCornerShape(12.dp))
-                                .padding(horizontal = 12.dp, vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.LocationOn,
-                                contentDescription = null,
-                                tint = HeaderWhite,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Text(
-                                text = resolvedLocation.orEmpty(),
-                                color = HeaderWhite,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Medium,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                    }
+            if (isOnDuty && currentLocation != null) {
+                Spacer(Modifier.height(12.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(HeaderWhite.copy(alpha = 0.16f), RoundedCornerShape(12.dp))
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.LocationOn,
+                        contentDescription = null,
+                        tint = HeaderWhite,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = currentLocation,
+                        color = HeaderWhite,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
             }
         }
+    }
+}
+
+@SuppressLint("MissingPermission")
+private suspend fun getCurrentCoordinates(context: Context): String? {
+    return suspendCancellableCoroutine { continuation ->
+        val client = LocationServices.getFusedLocationProviderClient(context)
+        val cts = CancellationTokenSource()
+
+        continuation.invokeOnCancellation { cts.cancel() }
+
+        client.lastLocation
+            .addOnSuccessListener { location ->
+                if (location != null) {
+                    continuation.resume("Lat: ${location.latitude}, Lon: ${location.longitude}")
+                    return@addOnSuccessListener
+                }
+
+                client.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, cts.token)
+                    .addOnSuccessListener { current ->
+                        if (current != null) {
+                            continuation.resume("Lat: ${current.latitude}, Lon: ${current.longitude}")
+                        } else {
+                            continuation.resume("Lat: --, Lon: --")
+                        }
+                    }
+                    .addOnFailureListener {
+                        continuation.resume("Lat: --, Lon: --")
+                    }
+            }
+            .addOnFailureListener {
+                continuation.resume("Lat: --, Lon: --")
+            }
     }
 }

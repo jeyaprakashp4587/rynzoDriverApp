@@ -8,18 +8,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
 import androidx.navigation.compose.*
+import androidx.navigation.navArgument
 import com.example.rynzodriver.ui.home.HomeScreen
 import com.example.rynzodriver.ui.navigation.BottomBarScreen
+import com.example.rynzodriver.ui.navigation.Screen
 import com.example.rynzodriver.ui.profile.ProfileScreen
 import com.example.rynzodriver.ui.trips.OrdersScreen
-
+import com.example.rynzodriver.ui.trips.RequestedTripDetailScreen
+import com.example.rynzodriver.ui.trips.TripRequestsScreen
 
 @Composable
-fun MainContainerScreen(
-    onTripRequestsClick: () -> Unit,
-    onTripDetailClick: (String) -> Unit = {}
-) {
+fun MainContainerScreen() {
     val navController = rememberNavController()
     val screens = listOf(
         BottomBarScreen.Home,
@@ -68,13 +69,26 @@ fun MainContainerScreen(
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(BottomBarScreen.Home.route) {
-                HomeScreen(
-                    onViewRequestsClick = onTripRequestsClick,
-                    onViewTripClick = { tripId -> onTripDetailClick(tripId) }
-                )
+                HomeScreen(navController = navController)
             }
             composable(BottomBarScreen.Orders.route) { OrdersScreen() }
             composable(BottomBarScreen.Profile.route) { ProfileScreen() }
+            composable(Screen.TripRequests.route) {
+                TripRequestsScreen(navController = navController)
+            }
+            composable(
+                route = Screen.TripDetail.route,
+                arguments = listOf(navArgument("tripId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val tripId = backStackEntry.arguments?.getString("tripId") ?: return@composable
+
+                RequestedTripDetailScreen(
+                    tripId = tripId,
+                    onDismiss = { navController.popBackStack() },
+                    onApprove = { },
+                    onReject = { }
+                )
+            }
         }
     }
 }

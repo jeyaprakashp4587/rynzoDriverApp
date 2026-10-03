@@ -1,42 +1,55 @@
 package com.example.rynzodriver.ui.home
 
+import android.content.Context
+import android.content.Intent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
+import com.example.rynzodriver.data.location.LocationService
+import com.example.rynzodriver.ui.navigation.Screen
 import com.example.rynzodriver.ui.permissions.PermissionHandler
 import com.example.rynzodriver.ui.trips.RequestedTripsSection
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    viewModel: HomeViewModel = hiltViewModel(),
-    onViewRequestsClick: () -> Unit = {},
-    onViewTripClick: (String) -> Unit = {}
+    navController: NavController,
+    viewModel: HomeViewModel = hiltViewModel()
 ) {
     PermissionHandler()
 
+    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     val (isOnDuty, setOnDuty) = remember { mutableStateOf(false) }
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val currentLocationName = "Unknown Location"
     val selectedVehicle = uiState.vehicles.firstOrNull { it.id == uiState.selectedVehicleId }
         ?: uiState.vehicles.firstOrNull()
 
     val selectedVehicleName = selectedVehicle?.let { vehicle ->
         listOfNotNull(vehicle.vehicleModel, vehicle.vehicleNumber).firstOrNull { it.isNotBlank() }
             ?: "Vehicle ${vehicle.id.take(4)}"
+    }
+
+    LaunchedEffect(isOnDuty) {
+        if (isOnDuty) {
+            startLocationTracking(context)
+        } else {
+            stopLocationTracking(context)
+        }
     }
 
     Column(
@@ -47,7 +60,6 @@ fun HomeScreen(
             isOnDuty = isOnDuty,
             onDutyChange = { setOnDuty(it) },
             userName = "John Doe",
-            locationName = if (isOnDuty) currentLocationName else null,
             selectedVehicleName = selectedVehicleName,
             onSelectVehicleClick = {
                 viewModel.fetchDriverVehicles()
@@ -61,7 +73,9 @@ fun HomeScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f),
-            onViewClick = { trip -> onViewTripClick(trip.id) }
+            onViewClick = { trip ->
+                navController.navigate(Screen.TripDetail.createRoute(trip.id))
+            }
         )
     }
 
@@ -151,3 +165,16 @@ fun HomeScreen(
         }
     }
 }
+
+private fun startLocationTracking(context: Context) {
+    val intent = Intent(context, LocationService::class.java)
+    intent.action = LocationService.ACTION_START
+    context.startService(intent)
+}
+
+private fun stopLocationTracking(context: Context) {
+    val intent = Intent(context, LocationService::class.java)
+    intent.action = LocationService.ACTION_STOP
+    context.startService(intent)
+}
+

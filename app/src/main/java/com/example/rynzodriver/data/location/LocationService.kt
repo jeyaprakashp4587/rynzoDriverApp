@@ -7,10 +7,12 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.rynzodriver.R
-import com.example.rynzodriver.data.api.ApiService
 import com.example.rynzodriver.data.dto.LocationUpdateDto
+import com.example.rynzodriver.domain.repository.websocket.WebSocketRepository
+import com.google.gson.Gson
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -31,7 +33,10 @@ class LocationService : Service() {
     lateinit var locationClient: LocationClient
 
     @Inject
-    lateinit var apiService: ApiService
+    lateinit var webSocketRepository: WebSocketRepository
+
+    @Inject
+    lateinit var gson: Gson
 
     override fun onBind(p0: Intent?): IBinder? {
         return null
@@ -51,6 +56,9 @@ class LocationService : Service() {
     }
 
     private fun start() {
+        // Connect to WebSocket
+        connectToWebSocket()
+
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Tracking location...")
             .setContentText("Location: Unknown")
@@ -61,7 +69,10 @@ class LocationService : Service() {
 
         locationClient
             .getLocationUpdates(10000L) // 10 sec heartbeat
-            .catch { e -> e.printStackTrace() }
+            .catch { e ->
+                Log.e("LocationService", "Location update error", e)
+                e.printStackTrace()
+            }
             .onEach { location ->
                 val lat = location.latitude
                 val long = location.longitude
@@ -69,26 +80,41 @@ class LocationService : Service() {
                     "Location: ($lat, $long)"
                 )
                 notificationManager.notify(NOTIFICATION_ID, updatedNotification.build())
-                
-                // Send heartbeat to API
-                sendLocationToApi(lat, long)
+            
+                sendLocationViaWebSocket(lat, long)
             }
             .launchIn(serviceScope)
 
         startForeground(NOTIFICATION_ID, notification.build())
     }
 
-    private fun sendLocationToApi(lat: Double, long: Double) {
+    private fun connectToWebSocket() {
+        val wsUrl = "ws://192.168.1.23:8000/driver/location"
+        Log.d("LocationService", "Connecting to WebSocket: $wsUrl")
+        webSocketRepository.connect(wsUrl)
+    }
+
+    private fun sendLocationViaWebSocket(lat: Double, long: Double) {
         serviceScope.launch {
             try {
-                apiService.updateLocation(LocationUpdateDto(lat, long))
+                val locationData = LocationUpdateDto(
+                    latitude = lat,
+                    longitude = long,
+                    timestamp = System.currentTimeMillis()
+                )
+                val jsonMessage = gson.toJson(locationData)
+                Log.d("LocationService", "Sending location: $jsonMessage")
+                webSocketRepository.sendMessage(jsonMessage)
             } catch (e: Exception) {
+                Log.e("LocationService", "Error sending location via WebSocket", e)
                 e.printStackTrace()
             }
         }
     }
 
     private fun stop() {
+        Log.d("LocationService", "Stopping location tracking")
+        webSocketRepository.disconnect()
         stopForeground(true)
         stopSelf()
     }
