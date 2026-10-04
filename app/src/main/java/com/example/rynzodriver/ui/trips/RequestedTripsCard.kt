@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -65,7 +66,8 @@ fun RequestedTripsCard(
 ) {
     Surface(
         modifier = modifier
-            .width(320.dp)
+            .fillMaxWidth()
+            .widthIn(max = 300.dp)
             .padding(vertical = 6.dp),
         shape = RoundedCornerShape(12.dp),
         color = CardBackground,
@@ -82,7 +84,7 @@ fun RequestedTripsCard(
                     Text(
                         text = "Trip request",
                         color = CardGray,
-                        fontSize = 12.sp,
+                        fontSize = 10.sp,
                         fontWeight = FontWeight.Medium
                     )
                     Spacer(Modifier.height(2.dp))
@@ -93,7 +95,7 @@ fun RequestedTripsCard(
                             ?.replaceFirstChar { it.titlecase() }
                             ?: "Trip",
                         color = CardBlack,
-                        fontSize = 20.sp,
+                        fontSize = 17.sp,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -106,10 +108,12 @@ fun RequestedTripsCard(
                             .replace("_", " ")
                             .lowercase()
                             .replaceFirstChar { it.titlecase() },
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                         color = CardBlack,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }
@@ -145,7 +149,7 @@ fun RequestedTripsCard(
                     Text(
                         text = trip.customerName ?: "Customer",
                         color = CardBlack,
-                        fontSize = 15.sp,
+                        fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -155,7 +159,7 @@ fun RequestedTripsCard(
                         Text(
                             text = phone,
                             color = CardGray,
-                            fontSize = 13.sp,
+                            fontSize = 11.sp,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
@@ -177,7 +181,7 @@ fun RequestedTripsCard(
                     contentColor = CardBackground
                 )
             ) {
-                Text("View", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                Text("View", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
             }
         }
     }
@@ -211,7 +215,7 @@ fun RequestedRouteSpine(stops: List<Stop>) {
                 Text(
                     text = if (hiddenCount == 1) "1 more stop" else "$hiddenCount more stops",
                     color = CardGray,
-                    fontSize = 13.sp,
+                    fontSize = 11.sp,
                     fontWeight = FontWeight.Medium
                 )
             }
@@ -258,14 +262,14 @@ private fun RouteStopRow(stop: Stop, showConnector: Boolean) {
             Text(
                 text = if (isPickup) "Pickup" else "Drop-off",
                 color = CardGray,
-                fontSize = 12.sp,
+                fontSize = 10.sp,
                 fontWeight = FontWeight.Medium
             )
             Spacer(Modifier.height(2.dp))
             Text(
                 text = stop.locationName,
                 color = CardBlack,
-                fontSize = 15.sp,
+                fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
@@ -290,7 +294,7 @@ fun RequestedTripsSection(
             Text(
                 text = "Trip Requests",
                 color = CardBlack,
-                fontSize = 20.sp,
+                fontSize = 17.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(start = 16.dp, top = 8.dp, bottom = 8.dp)
             )
@@ -315,7 +319,7 @@ fun RequestedTripsSection(
                     Text(
                         text = uiState.error!!,
                         color = CardBlack,
-                        fontSize = 15.sp,
+                        fontSize = 13.sp,
                         fontWeight = FontWeight.Medium
                     )
                     Spacer(Modifier.height(16.dp))
@@ -337,7 +341,7 @@ fun RequestedTripsSection(
                 Text(
                     text = "No trip requests available",
                     color = CardGray,
-                    fontSize = 15.sp,
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
                     modifier = Modifier.padding(24.dp)
                 )

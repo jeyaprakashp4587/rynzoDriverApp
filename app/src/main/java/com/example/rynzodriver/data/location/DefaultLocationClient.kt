@@ -5,16 +5,45 @@ import android.content.Context
 import android.location.Location
 import android.location.LocationManager
 import android.os.Looper
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.IntentSenderRequest
 import com.example.rynzodriver.util.hasLocationPermission
+import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.LocationSettingsRequest
 import com.google.android.gms.location.Priority
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
+
+fun Context.requestLocationSettingsResolution(
+    launcher: ActivityResultLauncher<IntentSenderRequest>
+) {
+    val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 10_000L)
+        .setMinUpdateDistanceMeters(5f)
+        .build()
+
+    val settingsRequest = LocationSettingsRequest.Builder()
+        .addLocationRequest(locationRequest)
+        .setAlwaysShow(true)
+        .build()
+
+    LocationServices.getSettingsClient(this)
+        .checkLocationSettings(settingsRequest)
+        .addOnSuccessListener {
+            // Location already enabled
+        }
+        .addOnFailureListener { exception ->
+            if (exception is ResolvableApiException) {
+                launcher.launch(IntentSenderRequest.Builder(exception.resolution).build())
+            }
+        }
+}
 
 class DefaultLocationClient(
     private val context: Context,

@@ -1,7 +1,5 @@
 package com.example.rynzodriver.ui.home
 
-import android.annotation.SuppressLint
-import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -29,25 +27,16 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.Priority
-import com.google.android.gms.tasks.CancellationTokenSource
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlin.coroutines.resume
 
 private val HeaderBlue = Color(0xFF4580F4)
 private val HeaderWhite = Color(0xFFFFFFFF)
@@ -58,25 +47,20 @@ private val OfflineGray = Color(0xFFBDBDBD)
 
 @Composable
 fun TopSection(
+    viewModel: HomeViewModel,
     appName: String = "Rynzo",
     userName: String = "Driver",
-    isOnDuty: Boolean,
-    onDutyChange: (Boolean) -> Unit,
+    currentLocation: String = "Lat: --, Lon: --",
+    lastLocation: String = "Lat: --, Lon: --",
     onNotificationsClick: () -> Unit = {},
-    selectedVehicleName: String? = null,
     onSelectVehicleClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
-    var resolvedLocation by remember { mutableStateOf<String?>(null) }
-    val currentLocation = resolvedLocation?.takeIf { it.isNotBlank() }
-
-    LaunchedEffect(isOnDuty) {
-        resolvedLocation = if (isOnDuty) {
-            getCurrentCoordinates(context)
-        } else {
-            null
-        }
+    val uiState by viewModel.uiState.collectAsState()
+    val isOnDuty = uiState.isOnDuty
+    val selectedVehicleName = viewModel.selectedVehicle?.let { vehicle ->
+        listOfNotNull(vehicle.vehicleModel, vehicle.vehicleNumber).firstOrNull { it.isNotBlank() }
+            ?: "Vehicle ${vehicle.id.take(4)}"
     }
 
     Surface(
@@ -97,11 +81,11 @@ fun TopSection(
                 Text(
                     text = appName,
                     color = HeaderWhite,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.ExtraBold
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
-
-                Spacer(Modifier.weight(1f))
 
                 Box(
                     modifier = Modifier
@@ -141,14 +125,14 @@ fun TopSection(
             Text(
                 text = "Hello,",
                 color = HeaderWhite.copy(alpha = 0.75f),
-                fontSize = 14.sp,
+                fontSize = 12.sp,
                 fontWeight = FontWeight.Medium
             )
             Spacer(Modifier.height(2.dp))
             Text(
                 text = userName,
                 color = HeaderWhite,
-                fontSize = 28.sp,
+                fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
@@ -182,22 +166,26 @@ fun TopSection(
                             Text(
                                 text = if (isOnDuty) "You're online" else "You're offline",
                                 color = HeaderBlack,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                             Spacer(Modifier.height(2.dp))
                             Text(
                                 text = if (isOnDuty) "Receiving trip requests" else "Go online to get trips",
                                 color = HeaderGray,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Medium
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     }
 
                     Switch(
                         checked = isOnDuty,
-                        onCheckedChange = onDutyChange,
+                        onCheckedChange = { viewModel.setOnDuty(it) },
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = HeaderWhite,
                             checkedTrackColor = HeaderBlack,
@@ -241,6 +229,7 @@ fun TopSection(
                         Spacer(Modifier.width(8.dp))
                         Text(
                             text = selectedVehicleName ?: "Select vehicle",
+                            fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
@@ -249,32 +238,46 @@ fun TopSection(
 
                     Text(
                         text = "Change",
-                        fontSize = 12.sp,
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
             }
 
-            if (isOnDuty && currentLocation != null) {
+            if (isOnDuty) {
                 Spacer(Modifier.height(12.dp))
-                Row(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(HeaderWhite.copy(alpha = 0.16f), RoundedCornerShape(12.dp))
-                        .padding(horizontal = 12.dp, vertical = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(horizontal = 12.dp, vertical = 10.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.LocationOn,
-                        contentDescription = null,
-                        tint = HeaderWhite,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(Modifier.width(8.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.LocationOn,
+                            contentDescription = null,
+                            tint = HeaderWhite,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = "Current: $currentLocation",
+                            color = HeaderWhite,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+
+                    Spacer(Modifier.height(6.dp))
+
                     Text(
-                        text = currentLocation,
-                        color = HeaderWhite,
-                        fontSize = 13.sp,
+                        text = "Last: $lastLocation",
+                        color = HeaderWhite.copy(alpha = 0.9f),
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.Medium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -282,38 +285,5 @@ fun TopSection(
                 }
             }
         }
-    }
-}
-
-@SuppressLint("MissingPermission")
-private suspend fun getCurrentCoordinates(context: Context): String? {
-    return suspendCancellableCoroutine { continuation ->
-        val client = LocationServices.getFusedLocationProviderClient(context)
-        val cts = CancellationTokenSource()
-
-        continuation.invokeOnCancellation { cts.cancel() }
-
-        client.lastLocation
-            .addOnSuccessListener { location ->
-                if (location != null) {
-                    continuation.resume("Lat: ${location.latitude}, Lon: ${location.longitude}")
-                    return@addOnSuccessListener
-                }
-
-                client.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, cts.token)
-                    .addOnSuccessListener { current ->
-                        if (current != null) {
-                            continuation.resume("Lat: ${current.latitude}, Lon: ${current.longitude}")
-                        } else {
-                            continuation.resume("Lat: --, Lon: --")
-                        }
-                    }
-                    .addOnFailureListener {
-                        continuation.resume("Lat: --, Lon: --")
-                    }
-            }
-            .addOnFailureListener {
-                continuation.resume("Lat: --, Lon: --")
-            }
     }
 }

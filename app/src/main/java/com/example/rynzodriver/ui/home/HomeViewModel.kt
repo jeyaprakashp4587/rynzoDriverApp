@@ -97,6 +97,10 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    fun setOnDuty(isOnDuty: Boolean) {
+        _uiState.update { it.copy(isOnDuty = isOnDuty) }
+    }
+
     val selectedVehicle: DriverVehicleDto?
         get() = _uiState.value.vehicles.firstOrNull { it.id == _uiState.value.selectedVehicleId }
             ?: _uiState.value.vehicles.firstOrNull()
@@ -107,5 +111,6 @@ data class HomeUiState(
     val vehicles: List<DriverVehicleDto> = emptyList(),
     val selectedVehicleId: String? = null,
     val isVehicleSheetOpen: Boolean = false,
+    val isOnDuty: Boolean = false,
     val error: String? = null
 )

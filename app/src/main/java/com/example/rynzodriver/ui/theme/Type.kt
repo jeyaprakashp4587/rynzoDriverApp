@@ -1,34 +1,60 @@
 package com.example.rynzodriver.ui.theme
 
-import androidx.compose.material3.Typography
+import androidx.compose.material3.Typography as MaterialTypography
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import com.example.rynzodriver.R
 
-// Set of Material typography styles to start with
-val Typography = Typography(
+val InterFontFamily = FontFamily(
+    Font(R.font.inter_variable, FontWeight.Normal),
+    Font(R.font.inter_variable, FontWeight.Medium),
+    Font(R.font.inter_variable, FontWeight.SemiBold),
+    Font(R.font.inter_variable, FontWeight.Bold)
+)
+
+val InterTypography: MaterialTypography = MaterialTypography(
+    displayLarge = TextStyle(fontFamily = InterFontFamily),
+    displayMedium = TextStyle(fontFamily = InterFontFamily),
+    displaySmall = TextStyle(fontFamily = InterFontFamily),
+    headlineLarge = TextStyle(fontFamily = InterFontFamily),
+    headlineMedium = TextStyle(fontFamily = InterFontFamily),
+    headlineSmall = TextStyle(fontFamily = InterFontFamily),
+    titleLarge = TextStyle(fontFamily = InterFontFamily),
+    titleMedium = TextStyle(fontFamily = InterFontFamily),
+    titleSmall = TextStyle(fontFamily = InterFontFamily),
     bodyLarge = TextStyle(
-        fontFamily = FontFamily.Default,
+        fontFamily = InterFontFamily,
         fontWeight = FontWeight.Normal,
-        fontSize = 16.sp,
-        lineHeight = 24.sp,
-        letterSpacing = 0.5.sp
-    )
-    /* Other default text styles to override
-    titleLarge = TextStyle(
-        fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.Normal,
-        fontSize = 22.sp,
-        lineHeight = 28.sp,
-        letterSpacing = 0.sp
+        fontSize = 14.sp,
+        lineHeight = 20.sp,
+        letterSpacing = 0.2.sp
     ),
-    labelSmall = TextStyle(
-        fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.Medium,
+    bodyMedium = TextStyle(
+        fontFamily = InterFontFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 12.sp,
+        lineHeight = 18.sp,
+        letterSpacing = 0.1.sp
+    ),
+    bodySmall = TextStyle(
+        fontFamily = InterFontFamily,
+        fontWeight = FontWeight.Normal,
         fontSize = 11.sp,
         lineHeight = 16.sp,
-        letterSpacing = 0.5.sp
+        letterSpacing = 0.1.sp
+    ),
+    labelLarge = TextStyle(fontFamily = InterFontFamily),
+    labelMedium = TextStyle(fontFamily = InterFontFamily),
+    labelSmall = TextStyle(
+        fontFamily = InterFontFamily,
+        fontWeight = FontWeight.Medium,
+        fontSize = 10.sp,
+        lineHeight = 14.sp,
+        letterSpacing = 0.4.sp
     )
-    */
 )
+
+val Typography: MaterialTypography = InterTypography

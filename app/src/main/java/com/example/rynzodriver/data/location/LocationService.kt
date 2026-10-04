@@ -76,11 +76,13 @@ class LocationService : Service() {
             .onEach { location ->
                 val lat = location.latitude
                 val long = location.longitude
+                LocationTrackingState.updateLocation(lat, long)
+
                 val updatedNotification = notification.setContentText(
                     "Location: ($lat, $long)"
                 )
                 notificationManager.notify(NOTIFICATION_ID, updatedNotification.build())
-            
+
                 sendLocationViaWebSocket(lat, long)
             }
             .launchIn(serviceScope)
@@ -114,6 +116,7 @@ class LocationService : Service() {
 
     private fun stop() {
         Log.d("LocationService", "Stopping location tracking")
+        LocationTrackingState.reset()
         webSocketRepository.disconnect()
         stopForeground(true)
         stopSelf()
