@@ -20,11 +20,15 @@ class MainViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
+            if (!dataStoreManager.hasValidSession()) {
+                dataStoreManager.clearAll()
+            }
+
             dataStoreManager.isLoggedIn.collectLatest { isLoggedIn ->
-                if (isLoggedIn) {
-                    _authState.value = AuthState.Authenticated
+                _authState.value = if (isLoggedIn) {
+                    AuthState.Authenticated
                 } else {
-                    _authState.value = AuthState.Unauthenticated
+                    AuthState.Unauthenticated
                 }
             }
         }

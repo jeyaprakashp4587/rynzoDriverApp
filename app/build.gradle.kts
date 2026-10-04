@@ -21,6 +21,11 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // Read GEOCODING_API_KEY from local.properties (add: GEOCODING_API_KEY=your_key)
         buildConfigField("String", "GEOCODING_API_KEY", "\"${project.findProperty("GEOCODING_API_KEY") ?: ""}\"")
+        buildConfigField(
+            "String",
+            "API_BASE_URL",
+            "\"${project.findProperty("API_BASE_URL") ?: "http://10.0.2.2:8000/"}\""
+        )
     }
 
     buildTypes {

@@ -35,6 +35,29 @@ fun RootNavGraph(
         Screen.Intro.route
     }
 
+    LaunchedEffect(authState) {
+        val currentRoute = navController.currentDestination?.route
+        when (authState) {
+            is AuthState.Authenticated -> {
+                if (currentRoute != Screen.MainContainer.route) {
+                    navController.navigate(Screen.MainContainer.route) {
+                        popUpTo(0) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
+            }
+            is AuthState.Unauthenticated -> {
+                if (currentRoute != Screen.Intro.route) {
+                    navController.navigate(Screen.Intro.route) {
+                        popUpTo(0) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
+            }
+            else -> Unit
+        }
+    }
+
     NavHost(
         navController = navController,
         startDestination = startDestination

@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -22,6 +23,10 @@ class DataStoreManager @Inject constructor(@ApplicationContext private val conte
         val USER_NAME = stringPreferencesKey("user_name")
         val USER_MOBILE = stringPreferencesKey("user_mobile")
         val USER_ROLE = stringPreferencesKey("user_role")
+
+        fun hasValidSession(accessToken: String?, userId: String?): Boolean {
+            return !accessToken.isNullOrBlank() && !userId.isNullOrBlank()
+        }
     }
 
     suspend fun saveAuthData(
@@ -43,11 +48,16 @@ class DataStoreManager @Inject constructor(@ApplicationContext private val conte
     }
 
     val accessToken: Flow<String?> = context.dataStore.data.map { it[ACCESS_TOKEN] }
-    
+
     val userId: Flow<String?> = context.dataStore.data.map { it[USER_ID] }
 
-    val isLoggedIn: Flow<Boolean> = context.dataStore.data.map { 
-        !it[ACCESS_TOKEN].isNullOrEmpty() 
+    suspend fun hasValidSession(): Boolean {
+        val preferences = context.dataStore.data.first()
+        return hasValidSession(preferences[ACCESS_TOKEN], preferences[USER_ID])
+    }
+
+    val isLoggedIn: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        hasValidSession(preferences[ACCESS_TOKEN], preferences[USER_ID])
     }
 
     suspend fun clearAll() {
