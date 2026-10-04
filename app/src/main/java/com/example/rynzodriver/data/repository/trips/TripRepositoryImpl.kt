@@ -88,4 +88,20 @@ class TripRepositoryImpl @Inject constructor(
             Result.failure(e)
         }
     }
+
+    override suspend fun acceptTripRequest(tripId: String): Result<String> {
+        return try {
+            val response = tripApiService.acceptTripRequest(tripId)
+            if (response.isSuccessful) {
+                Result.success(response.body()?.message ?: "Trip request accepted successfully")
+            } else {
+                val errorMessage = response.errorBody()?.string()
+                    ?: response.body()?.message
+                    ?: "Failed to accept trip request"
+                Result.failure(Exception(errorMessage))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

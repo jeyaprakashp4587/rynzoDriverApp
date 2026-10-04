@@ -1,9 +1,11 @@
 package com.example.rynzodriver.data.api.trips
 
 import com.example.rynzodriver.data.dto.trips.ParticularTripResponse
+import com.example.rynzodriver.data.dto.trips.TripAcceptResponse
 import com.example.rynzodriver.data.dto.trips.TripResponse
 import retrofit2.Response
 import retrofit2.http.GET
+import retrofit2.http.POST
 import retrofit2.http.Path
 
 interface TripApiService {
@@ -12,4 +14,7 @@ interface TripApiService {
 
     @GET("api/trips/requests/{tripId}")
     suspend fun getParticularRequestedTripDetails(@Path("tripId") tripId: String): Response<ParticularTripResponse>
+
+    @POST("api/trips/requests/{tripId}/accept-driver")
+    suspend fun acceptTripRequest(@Path("tripId") tripId: String): Response<TripAcceptResponse>
 }

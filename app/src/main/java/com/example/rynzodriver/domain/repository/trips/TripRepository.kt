@@ -6,4 +6,5 @@ import com.example.rynzodriver.domain.model.trips.TripDetail
 interface TripRepository {
     suspend fun getTripRequests(): Result<List<Trip>>
     suspend fun getTripDetails(tripId: String): Result<TripDetail>
+    suspend fun acceptTripRequest(tripId: String): Result<String>
 }

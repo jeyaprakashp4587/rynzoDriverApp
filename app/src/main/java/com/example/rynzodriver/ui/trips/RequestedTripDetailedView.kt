@@ -118,8 +118,13 @@ fun RequestedTripDetailScreen(
     val tripDetail = uiState.selectedTripDetail
     val isLoading = uiState.isDetailLoading
     val error = uiState.detailError
+    val isApproving = uiState.isAccepting
 
     if (tripDetail == null && !isLoading && error == null) return
+
+    val handleApprove = {
+        viewModel.acceptTripRequest(tripId, onSuccess = onApprove)
+    }
 
     Box(
         modifier = Modifier
@@ -143,8 +148,9 @@ fun RequestedTripDetailScreen(
             tripDetail != null -> TripContent(
                 trip = tripDetail,
                 onDismiss = onDismiss,
-                onApprove = onApprove,
-                onReject = onReject
+                onApprove = handleApprove,
+                onReject = onReject,
+                isApproving = isApproving
             )
         }
     }
@@ -207,7 +213,8 @@ private fun TripContent(
     trip: TripDetail,
     onDismiss: () -> Unit,
     onApprove: () -> Unit,
-    onReject: () -> Unit
+    onReject: () -> Unit,
+    isApproving: Boolean = false
 ) {
     if (trip.stops.isEmpty()) {
         Box(
@@ -333,7 +340,11 @@ private fun TripContent(
                 }
 
                 HorizontalDivider(color = AppDivider, thickness = 1.dp)
-                ActionBar(onApprove = onApprove, onReject = onReject)
+                ActionBar(
+                    onApprove = onApprove,
+                    onReject = onReject,
+                    isApproving = isApproving
+                )
             }
         }
     }
@@ -508,7 +519,11 @@ private fun StopRow(stop: Stop, isLast: Boolean) {
 }
 
 @Composable
-private fun ActionBar(onApprove: () -> Unit, onReject: () -> Unit) {
+private fun ActionBar(
+    onApprove: () -> Unit,
+    onReject: () -> Unit,
+    isApproving: Boolean = false
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -519,6 +534,7 @@ private fun ActionBar(onApprove: () -> Unit, onReject: () -> Unit) {
     ) {
         Button(
             onClick = onReject,
+            enabled = !isApproving,
             modifier = Modifier
                 .weight(1f)
                 .height(52.dp),
@@ -530,6 +546,7 @@ private fun ActionBar(onApprove: () -> Unit, onReject: () -> Unit) {
         }
         Button(
             onClick = onApprove,
+            enabled = !isApproving,
             modifier = Modifier
                 .weight(1f)
                 .height(52.dp),
@@ -537,7 +554,23 @@ private fun ActionBar(onApprove: () -> Unit, onReject: () -> Unit) {
             elevation = null,
             colors = ButtonDefaults.buttonColors(containerColor = AppBlack, contentColor = AppBackground)
         ) {
-            Text("Approve", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+            if (isApproving) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp,
+                        color = AppBackground,
+                        trackColor = AppBackground.copy(alpha = 0.35f)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text("Approving...", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                }
+            } else {
+                Text("Approve", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+            }
         }
     }
 }
