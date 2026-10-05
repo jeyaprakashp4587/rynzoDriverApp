@@ -9,6 +9,7 @@ import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import com.example.rynzodriver.BuildConfig
 import com.example.rynzodriver.R
 import com.example.rynzodriver.data.dto.LocationUpdateDto
 import com.example.rynzodriver.domain.repository.websocket.WebSocketRepository
@@ -91,7 +92,8 @@ class LocationService : Service() {
     }
 
     private fun connectToWebSocket() {
-        val wsUrl = "ws://192.168.1.23:8000/driver/location"
+        val baseUrl = BuildConfig.API_BASE_URL.trimEnd('/')
+        val wsUrl = baseUrl.replace("http://", "ws://").replace("https://", "wss://") + "/driver/location"
         Log.d("LocationService", "Connecting to WebSocket: $wsUrl")
         webSocketRepository.connect(wsUrl)
     }

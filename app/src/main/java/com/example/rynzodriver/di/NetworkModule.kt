@@ -1,5 +1,6 @@
 package com.example.rynzodriver.di
 
+import com.example.rynzodriver.BuildConfig
 import com.example.rynzodriver.data.api.ApiService
 import com.example.rynzodriver.data.api.AuthInterceptor
 import com.example.rynzodriver.data.api.auth.AuthApiService
@@ -49,7 +50,7 @@ object NetworkModule {
     @Singleton
     fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("http://192.168.1.23:8000/")
+            .baseUrl(BuildConfig.API_BASE_URL)
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
