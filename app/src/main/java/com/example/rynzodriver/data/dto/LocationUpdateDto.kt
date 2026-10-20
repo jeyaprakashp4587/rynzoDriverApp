@@ -4,7 +4,9 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class LocationUpdateDto(
-    val latitude: Double,
-    val longitude: Double,
-    val timestamp: Long = System.currentTimeMillis()
+    val type: String = "VehicleLocation",
+    val vehicleId: String,
+    val lat: Double,
+    val lon: Double,
+    val time: String = System.currentTimeMillis().toString()
 )

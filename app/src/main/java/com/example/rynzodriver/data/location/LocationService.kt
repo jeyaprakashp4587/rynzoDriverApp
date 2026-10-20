@@ -12,6 +12,7 @@ import androidx.core.app.NotificationCompat
 import com.example.rynzodriver.BuildConfig
 import com.example.rynzodriver.R
 import com.example.rynzodriver.data.dto.LocationUpdateDto
+import com.example.rynzodriver.data.local.DataStoreManager
 import com.example.rynzodriver.domain.repository.websocket.WebSocketRepository
 import com.google.gson.Gson
 import dagger.hilt.android.AndroidEntryPoint
@@ -20,6 +21,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -29,6 +31,7 @@ import javax.inject.Inject
 class LocationService : Service() {
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private var activeVehicleId: String? = null
 
     @Inject
     lateinit var locationClient: LocationClient
@@ -38,6 +41,9 @@ class LocationService : Service() {
 
     @Inject
     lateinit var gson: Gson
+
+    @Inject
+    lateinit var dataStoreManager: DataStoreManager
 
     override fun onBind(p0: Intent?): IBinder? {
         return null
@@ -50,14 +56,21 @@ class LocationService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when(intent?.action) {
-            ACTION_START -> start()
+            ACTION_START -> start(intent)
             ACTION_STOP -> stop()
         }
         return super.onStartCommand(intent, flags, startId)
     }
 
-    private fun start() {
-        // Connect to WebSocket
+    private fun start(startIntent: Intent?) {
+        val vehicleId = startIntent?.getStringExtra(EXTRA_VEHICLE_ID)
+        if (vehicleId.isNullOrBlank()) {
+            Log.w("LocationService", "Vehicle ID missing; location tracking will not start.")
+            stopSelf()
+            return
+        }
+
+        activeVehicleId = vehicleId
         connectToWebSocket()
 
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
@@ -92,19 +105,35 @@ class LocationService : Service() {
     }
 
     private fun connectToWebSocket() {
-        val baseUrl = BuildConfig.API_BASE_URL.trimEnd('/')
-        val wsUrl = baseUrl.replace("http://", "ws://").replace("https://", "wss://") + "/driver/location"
-        Log.d("LocationService", "Connecting to WebSocket: $wsUrl")
-        webSocketRepository.connect(wsUrl)
+        serviceScope.launch {
+            val driverId = dataStoreManager.userId.first() ?: run {
+                Log.e("LocationService", "Missing userId for websocket connection")
+                return@launch
+            }
+
+            val baseUrl = BuildConfig.API_BASE_URL.trimEnd('/')
+            val wsUrl = baseUrl
+                .replace("http://", "ws://")
+                .replace("https://", "wss://") + "/connect?userId=$driverId"
+            Log.d("LocationService", "Connecting to WebSocket: $wsUrl")
+            webSocketRepository.connect(wsUrl)
+        }
     }
 
     private fun sendLocationViaWebSocket(lat: Double, long: Double) {
         serviceScope.launch {
             try {
+                val vehicleId = activeVehicleId
+                if (vehicleId.isNullOrBlank()) {
+                    Log.w("LocationService", "Skip socket send because vehicleId is missing")
+                    return@launch
+                }
+
                 val locationData = LocationUpdateDto(
-                    latitude = lat,
-                    longitude = long,
-                    timestamp = System.currentTimeMillis()
+                    vehicleId = vehicleId,
+                    lat = lat,
+                    lon = long,
+                    time = System.currentTimeMillis().toString()
                 )
                 val jsonMessage = gson.toJson(locationData)
                 Log.d("LocationService", "Sending location: $jsonMessage")
@@ -118,6 +147,7 @@ class LocationService : Service() {
 
     private fun stop() {
         Log.d("LocationService", "Stopping location tracking")
+        activeVehicleId = null
         LocationTrackingState.reset()
         webSocketRepository.disconnect()
         stopForeground(true)
@@ -144,6 +174,7 @@ class LocationService : Service() {
     companion object {
         const val ACTION_START = "ACTION_START"
         const val ACTION_STOP = "ACTION_STOP"
+        const val EXTRA_VEHICLE_ID = "extra_vehicle_id"
         private const val CHANNEL_ID = "location"
         private const val NOTIFICATION_ID = 1
     }

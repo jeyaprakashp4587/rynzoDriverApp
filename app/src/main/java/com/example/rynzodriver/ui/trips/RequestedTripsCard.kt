@@ -286,34 +286,40 @@ fun RequestedTripsSection(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    Box(
-        modifier = modifier.fillMaxWidth(),
-        contentAlignment = Alignment.Center
+    Column(
+        modifier = modifier.fillMaxWidth()
     ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Text(
-                text = "Trip Requests",
-                color = CardBlack,
-                fontSize = 17.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(start = 16.dp, top = 8.dp, bottom = 8.dp)
-            )
+        Text(
+            text = "Trip Requests",
+            color = CardBlack,
+            fontSize = 17.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(start = 16.dp, top = 8.dp, bottom = 8.dp)
+        )
 
-            Spacer(modifier = Modifier.height(4.dp))
-        }
+        Spacer(modifier = Modifier.height(4.dp))
 
         when {
             uiState.isLoading -> {
-                CircularProgressIndicator(
-                    color = CardBlack,
-                    trackColor = CardLightGray,
-                    strokeWidth = 3.dp
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        color = CardBlack,
+                        trackColor = CardLightGray,
+                        strokeWidth = 3.dp
+                    )
+                }
             }
 
             uiState.error != null -> {
                 Column(
-                    modifier = Modifier.padding(24.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
@@ -343,7 +349,9 @@ fun RequestedTripsSection(
                     color = CardGray,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
-                    modifier = Modifier.padding(24.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp)
                 )
             }
 

@@ -8,6 +8,8 @@ import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -44,8 +46,15 @@ fun HomeScreen(
         contract = ActivityResultContracts.StartIntentSenderForResult()
     ) { }
 
-    LaunchedEffect(uiState.isOnDuty) {
+    LaunchedEffect(uiState.isOnDuty, uiState.selectedVehicleId) {
         if (uiState.isOnDuty) {
+            val selectedVehicleId = uiState.selectedVehicleId
+            if (selectedVehicleId.isNullOrBlank()) {
+                viewModel.setOnDuty(false)
+                stopLocationTracking(context)
+                return@LaunchedEffect
+            }
+
             if (!context.hasLocationPermission()) {
                 viewModel.setOnDuty(false)
                 stopLocationTracking(context)
@@ -61,7 +70,7 @@ fun HomeScreen(
                 context.requestLocationSettingsResolution(locationSettingsLauncher)
                 return@LaunchedEffect
             }
-            startLocationTracking(context)
+            startLocationTracking(context, selectedVehicleId)
         } else {
             stopLocationTracking(context)
         }
@@ -70,6 +79,7 @@ fun HomeScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
     ) {
         TopSection(
             viewModel = viewModel,
@@ -85,9 +95,7 @@ fun HomeScreen(
         Spacer(modifier = Modifier.height(12.dp))
 
         RequestedTripsSection(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f),
+            modifier = Modifier.fillMaxWidth(),
             onViewClick = { trip ->
                 navController.navigate(Screen.TripDetail.createRoute(trip.id))
             }
@@ -181,9 +189,10 @@ fun HomeScreen(
     }
 }
 
-private fun startLocationTracking(context: Context) {
+private fun startLocationTracking(context: Context, vehicleId: String) {
     val intent = Intent(context, LocationService::class.java)
     intent.action = LocationService.ACTION_START
+    intent.putExtra(LocationService.EXTRA_VEHICLE_ID, vehicleId)
     context.startService(intent)
 }
 
