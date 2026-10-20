@@ -13,6 +13,7 @@ import com.example.rynzodriver.BuildConfig
 import com.example.rynzodriver.R
 import com.example.rynzodriver.data.dto.LocationUpdateDto
 import com.example.rynzodriver.data.local.DataStoreManager
+import com.example.rynzodriver.data.websocket.WebSocketState
 import com.example.rynzodriver.domain.repository.websocket.WebSocketRepository
 import com.google.gson.Gson
 import dagger.hilt.android.AndroidEntryPoint
@@ -111,12 +112,20 @@ class LocationService : Service() {
                 return@launch
             }
 
-            val baseUrl = BuildConfig.API_BASE_URL.trimEnd('/')
-            val wsUrl = baseUrl
-                .replace("http://", "ws://")
-                .replace("https://", "wss://") + "/connect?userId=$driverId"
-            Log.d("LocationService", "Connecting to WebSocket: $wsUrl")
+            val liveBaseUrl = BuildConfig.LIVE_TRACKING_WS_URL.trimEnd('/')
+            val wsUrl = liveBaseUrl + "/connect?userId=$driverId"
+            Log.d("LocationService", "Connecting to live tracking WebSocket: $wsUrl")
             webSocketRepository.connect(wsUrl)
+
+            val connected = webSocketRepository.connectionState.first { it is WebSocketState.Connected }
+            Log.d("LocationService", "WebSocket connected state reached: $connected")
+
+            val vehicleId = activeVehicleId
+            if (!vehicleId.isNullOrBlank()) {
+                val joinMessage = """{"type":"joinVehicle","vehicleId":"$vehicleId"}"""
+                val joined = webSocketRepository.sendMessage(joinMessage)
+                Log.d("LocationService", "Join vehicle room result: $joined -> $joinMessage")
+            }
         }
     }
 
@@ -129,6 +138,11 @@ class LocationService : Service() {
                     return@launch
                 }
 
+                if (webSocketRepository.connectionState.value !is WebSocketState.Connected) {
+                    Log.w("LocationService", "WebSocket not connected yet. Skipping location send for vehicleId=$vehicleId")
+                    return@launch
+                }
+
                 val locationData = LocationUpdateDto(
                     vehicleId = vehicleId,
                     lat = lat,
@@ -136,8 +150,11 @@ class LocationService : Service() {
                     time = System.currentTimeMillis().toString()
                 )
                 val jsonMessage = gson.toJson(locationData)
-                Log.d("LocationService", "Sending location: $jsonMessage")
-                webSocketRepository.sendMessage(jsonMessage)
+                val sent = webSocketRepository.sendMessage(jsonMessage)
+                Log.d("LocationService", "Sending location result: $sent -> $jsonMessage")
+                if (!sent) {
+                    Log.w("LocationService", "Location socket send failed; connection may not be open yet")
+                }
             } catch (e: Exception) {
                 Log.e("LocationService", "Error sending location via WebSocket", e)
                 e.printStackTrace()

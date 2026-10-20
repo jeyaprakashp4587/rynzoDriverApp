@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class LocationUpdateDto(
-    val type: String = "VehicleLocation",
+    val type: String = "vehicleLocation",
     val vehicleId: String,
     val lat: Double,
     val lon: Double,
