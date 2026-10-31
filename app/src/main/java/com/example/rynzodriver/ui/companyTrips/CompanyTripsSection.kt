@@ -89,12 +89,20 @@ fun CompanyTripDto.toUiModel(): CompanyTripUiModel {
         recipients.firstOrNull()?.name
     ).firstOrNull { !it.isNullOrBlank() } ?: "Route customer"
 
+    val vehicleLabel = listOfNotNull(
+        vehicle?.vehicleNumber,
+        vehicle?.vehicleModel,
+        vehicleId,
+        id
+    ).firstOrNull { !it.isNullOrBlank() }
+        ?: "Vehicle assigned"
+
     return CompanyTripUiModel(
         id = id,
         title = primaryName,
         status = statusLabel,
         routeName = primaryName,
-        vehicleLabel = "Vehicle assigned",
+        vehicleLabel = vehicleLabel,
         pickupLabel = pickupLabel,
         dropoffLabel = dropoffLabel,
         customerLabel = customerLabel

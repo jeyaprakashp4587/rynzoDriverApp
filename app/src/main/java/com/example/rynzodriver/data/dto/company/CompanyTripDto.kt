@@ -17,12 +17,21 @@ data class CompanyTripDto(
     @SerializedName("tripType") val tripType: String? = null,
     @SerializedName("type") val type: String? = null,
     @SerializedName("customerName") val customerName: String? = null,
+    @SerializedName("driverId") val driverId: String? = null,
+    @SerializedName("vehicleId") val vehicleId: String? = null,
+    @SerializedName("vehicle") val vehicle: CompanyTripVehicleDto? = null,
     @SerializedName("recipientCount") val recipientCount: Int? = null,
     @SerializedName("recipients") val recipients: List<CompanyTripRecipientDto> = emptyList(),
     @SerializedName("stops") val stops: List<CompanyTripStopDto> = emptyList(),
     @SerializedName("pickupLocation") val pickupLocation: CompanyTripStopLocationDto? = null,
     @SerializedName("dropoffLocation") val dropoffLocation: CompanyTripStopLocationDto? = null,
     @SerializedName("createdAt") val createdAt: String? = null
+)
+
+data class CompanyTripVehicleDto(
+    @SerializedName("_id") val id: String? = null,
+    @SerializedName("vehicleNumber") val vehicleNumber: String? = null,
+    @SerializedName("vehicleModel") val vehicleModel: String? = null
 )
 
 data class CompanyTripRecipientDto(
