@@ -25,6 +25,7 @@ import androidx.navigation.NavController
 import com.example.rynzodriver.data.location.LocationService
 import com.example.rynzodriver.data.location.LocationTrackingState
 import com.example.rynzodriver.data.location.requestLocationSettingsResolution
+import com.example.rynzodriver.ui.companyTrips.CompanyTripsSection
 import com.example.rynzodriver.ui.navigation.Screen
 import com.example.rynzodriver.ui.permissions.PermissionHandler
 import com.example.rynzodriver.ui.trips.RequestedTripsSection
@@ -98,6 +99,18 @@ fun HomeScreen(
             modifier = Modifier.fillMaxWidth(),
             onViewClick = { trip ->
                 navController.navigate(Screen.TripDetail.createRoute(trip.id))
+            }
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        CompanyTripsSection(
+            trips = uiState.companyTrips,
+            isLoading = uiState.isCompanyTripsLoading,
+            error = uiState.companyTripsError,
+            modifier = Modifier.fillMaxWidth(),
+            onViewClick = { trip ->
+                // Company trip detail flow can be added later if backend exposes it.
             }
         )
     }

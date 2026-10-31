@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.rynzodriver.data.api.ApiService
 import com.example.rynzodriver.data.dto.vehicles.DriverVehicleDto
 import com.example.rynzodriver.data.local.DataStoreManager
+import com.example.rynzodriver.ui.companyTrips.CompanyTripUiModel
+import com.example.rynzodriver.ui.companyTrips.toUiModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -60,6 +62,18 @@ class HomeViewModel @Inject constructor(
                             error = null
                         )
                     }
+
+                    if (!selectedVehicleId.isNullOrBlank()) {
+                        fetchCompanyTripsForVehicle(selectedVehicleId)
+                    } else {
+                        _uiState.update {
+                            it.copy(
+                                isCompanyTripsLoading = false,
+                                companyTrips = emptyList(),
+                                companyTripsError = "Please select a vehicle to view company trips"
+                            )
+                        }
+                    }
                 } else {
                     val message = response.errorBody()?.string() ?: "Failed to load vehicles"
                     _uiState.update {
@@ -74,6 +88,63 @@ class HomeViewModel @Inject constructor(
                     it.copy(
                         isLoading = false,
                         error = e.message ?: "Something went wrong while loading vehicles"
+                    )
+                }
+            }
+        }
+    }
+
+    fun fetchCompanyTripsForVehicle(vehicleId: String?) {
+        viewModelScope.launch {
+            val userId = dataStoreManager.userId.first()
+            if (userId.isNullOrBlank()) {
+                _uiState.update {
+                    it.copy(
+                        isCompanyTripsLoading = false,
+                        companyTripsError = "User not found. Please login again."
+                    )
+                }
+                return@launch
+            }
+
+            if (vehicleId.isNullOrBlank()) {
+                _uiState.update {
+                    it.copy(
+                        isCompanyTripsLoading = false,
+                        companyTrips = emptyList(),
+                        companyTripsError = "Select a vehicle to load company trips"
+                    )
+                }
+                return@launch
+            }
+
+            _uiState.update { it.copy(isCompanyTripsLoading = true, companyTripsError = null) }
+
+            try {
+                val response = apiService.getDriverCompanyRoutes(userId, vehicleId)
+                if (response.isSuccessful) {
+                    val trips = response.body()?.data.orEmpty().map { it.toUiModel() }
+                    _uiState.update {
+                        it.copy(
+                            isCompanyTripsLoading = false,
+                            companyTrips = trips,
+                            companyTripsError = null
+                        )
+                    }
+                } else {
+                    val message = response.errorBody()?.string() ?: "Failed to load company trips"
+                    _uiState.update {
+                        it.copy(
+                            isCompanyTripsLoading = false,
+                            companyTripsError = message
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(
+                        isCompanyTripsLoading = false,
+                        companyTripsError = e.message ?: "Something went wrong while loading company trips"
                     )
                 }
             }
@@ -95,6 +166,7 @@ class HomeViewModel @Inject constructor(
                 isVehicleSheetOpen = false
             )
         }
+        fetchCompanyTripsForVehicle(vehicle.id)
     }
 
     fun setOnDuty(isOnDuty: Boolean) {
@@ -112,5 +184,8 @@ data class HomeUiState(
     val selectedVehicleId: String? = null,
     val isVehicleSheetOpen: Boolean = false,
     val isOnDuty: Boolean = false,
+    val companyTrips: List<CompanyTripUiModel> = emptyList(),
+    val isCompanyTripsLoading: Boolean = false,
+    val companyTripsError: String? = null,
     val error: String? = null
 )
