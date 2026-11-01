@@ -110,7 +110,7 @@ fun HomeScreen(
             error = uiState.companyTripsError,
             modifier = Modifier.fillMaxWidth(),
             onViewClick = { trip ->
-                // Company trip detail flow can be added later if backend exposes it.
+                navController.navigate(Screen.CompanyTripDetail.createRoute(trip))
             }
         )
     }

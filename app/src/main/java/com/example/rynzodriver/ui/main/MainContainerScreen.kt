@@ -11,6 +11,7 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.*
 import androidx.navigation.navArgument
+import com.example.rynzodriver.ui.companyTrips.CompanyTripDetailScreen
 import com.example.rynzodriver.ui.home.HomeScreen
 import com.example.rynzodriver.ui.navigation.BottomBarScreen
 import com.example.rynzodriver.ui.navigation.Screen
@@ -87,6 +88,38 @@ fun MainContainerScreen() {
                     onDismiss = { navController.popBackStack() },
                     onApprove = { },
                     onReject = { }
+                )
+            }
+            composable(
+                route = Screen.CompanyTripDetail.route,
+                arguments = listOf(
+                    navArgument("routeId") { type = NavType.StringType },
+                    navArgument("vehicleId") { type = NavType.StringType },
+                    navArgument("driverId") {
+                        type = NavType.StringType
+                        defaultValue = ""
+                    },
+                    navArgument("title") { type = NavType.StringType },
+                    navArgument("vehicleLabel") { type = NavType.StringType },
+                    navArgument("stops") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val routeId = backStackEntry.arguments?.getString("routeId") ?: return@composable
+                val vehicleId = backStackEntry.arguments?.getString("vehicleId") ?: return@composable
+                val driverId = backStackEntry.arguments?.getString("driverId") ?: ""
+                val title = Uri.decode(backStackEntry.arguments?.getString("title") ?: "Company trip")
+                val vehicleLabel = Uri.decode(backStackEntry.arguments?.getString("vehicleLabel") ?: "Vehicle")
+                val stopsRaw = Uri.decode(backStackEntry.arguments?.getString("stops") ?: "")
+                val stops = if (stopsRaw.isBlank()) emptyList() else stopsRaw.split("||").filter { it.isNotBlank() }
+
+                CompanyTripDetailScreen(
+                    routeId = routeId,
+                    vehicleId = vehicleId,
+                    driverId = driverId,
+                    title = title,
+                    vehicleLabel = vehicleLabel,
+                    stops = stops,
+                    onBack = { navController.popBackStack() }
                 )
             }
         }

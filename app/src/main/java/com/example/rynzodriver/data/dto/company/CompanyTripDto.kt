@@ -10,12 +10,15 @@ data class CompanyTripListResponse(
 
 data class CompanyTripDto(
     @SerializedName("_id") val id: String = "",
+    @SerializedName("routeId") val routeId: String? = null,
     @SerializedName("routeName") val routeName: String? = null,
     @SerializedName("title") val title: String? = null,
     @SerializedName("name") val name: String? = null,
     @SerializedName("status") val status: String? = null,
     @SerializedName("tripType") val tripType: String? = null,
     @SerializedName("type") val type: String? = null,
+    @SerializedName("tripStopMode") val tripStopMode: String? = null,
+    @SerializedName("isDailyTrip") val isDailyTrip: Boolean? = null,
     @SerializedName("customerName") val customerName: String? = null,
     @SerializedName("driverId") val driverId: String? = null,
     @SerializedName("vehicleId") val vehicleId: String? = null,
@@ -53,4 +56,21 @@ data class CompanyTripStopLocationDto(
     @SerializedName("name") val name: String? = null,
     @SerializedName("locationName") val locationName: String? = null,
     @SerializedName("address") val address: String? = null
+)
+
+data class CompanyRunStartRequest(
+    @SerializedName("vehicleId") val vehicleId: String
+)
+
+data class CompanyRunStartResponse(
+    @SerializedName("success") val success: Boolean = false,
+    @SerializedName("message") val message: String? = null,
+    @SerializedName("data") val data: CompanyRunStartData? = null
+)
+
+data class CompanyRunStartData(
+    @SerializedName("tripId") val tripId: String? = null,
+    @SerializedName("routeId") val routeId: String? = null,
+    @SerializedName("vehicleId") val vehicleId: String? = null,
+    @SerializedName("status") val status: String? = null
 )

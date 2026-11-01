@@ -40,72 +40,63 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.rynzodriver.data.dto.company.CompanyTripDto
 
-private val CompanyCardBackground = Color(0xFFFFFFFF)
-private val CompanyCardBlack = Color(0xFF000000)
-private val CompanyCardLightGray = Color(0xFFF3F3F3)
-private val CompanyCardDivider = Color(0xFFEAEAEA)
-private val CompanyCardGray = Color(0xFF6B6B6B)
+private val CardBackground = Color(0xFFFFFFFF)
+private val CardText = Color(0xFF111111)
+private val CardSecondary = Color(0xFF737373)
+private val CardDivider = Color(0xFFEAEAEA)
+private val CardSurface = Color(0xFFF6F6F6)
 
 data class CompanyTripUiModel(
     val id: String,
+    val routeId: String,
+    val vehicleId: String,
+    val driverId: String,
     val title: String,
-    val status: String,
-    val routeName: String,
     val vehicleLabel: String,
-    val pickupLabel: String,
-    val dropoffLabel: String,
-    val customerLabel: String
+    val stops: List<String>
 )
 
 fun CompanyTripDto.toUiModel(): CompanyTripUiModel {
-    val primaryName = listOfNotNull(
+    val vehicleNumber = vehicle?.vehicleNumber?.trim().orEmpty()
+    val vehicleModel = vehicle?.vehicleModel?.trim().orEmpty()
+
+    val vehicleDisplay = listOfNotNull(
+        vehicleNumber.ifBlank { null },
+        vehicleModel.ifBlank { null }
+    ).joinToString(" • ")
+        .ifBlank { "Vehicle ${vehicleId?.take(6) ?: "assigned"}" }
+
+    val routeTitle = listOf(
         routeName,
         title,
         name,
         tripType,
         type
-    ).firstOrNull { !it.isNullOrBlank() } ?: "Company route"
-
-    val statusLabel = status?.replace("_", " ")
-        ?.lowercase()
-        ?.replaceFirstChar { it.titlecase() } ?: "Active"
-
-    val pickupLabel = stops.firstOrNull { it.type.equals("pickup", ignoreCase = true) || it.stopType.equals("pickup", ignoreCase = true) }
-        ?.locationName
-        ?: pickupLocation?.locationName
-        ?: pickupLocation?.name
-        ?: "Pickup"
-
-    val dropoffLabel = stops.firstOrNull { it.type.equals("drop", ignoreCase = true) || it.type.equals("dropoff", ignoreCase = true) || it.stopType.equals("drop", ignoreCase = true) || it.stopType.equals("dropoff", ignoreCase = true) }
-        ?.locationName
-        ?: dropoffLocation?.locationName
-        ?: dropoffLocation?.name
-        ?: "Drop-off"
-
-    val customerLabel = listOfNotNull(
-        customerName,
-        recipients.firstOrNull()?.customerName,
-        recipients.firstOrNull()?.recipientName,
-        recipients.firstOrNull()?.name
-    ).firstOrNull { !it.isNullOrBlank() } ?: "Route customer"
-
-    val vehicleLabel = listOfNotNull(
-        vehicle?.vehicleNumber,
-        vehicle?.vehicleModel,
-        vehicleId,
-        id
     ).firstOrNull { !it.isNullOrBlank() }
-        ?: "Vehicle assigned"
+        ?: if (isDailyTrip == true) "Daily route" else "Company trip"
+
+    // Keep every named stop in the order supplied by the API.
+    val routeStops = stops.mapNotNull { stop ->
+        stop.locationName?.trim()?.takeIf { it.isNotBlank() }
+    }.ifEmpty {
+        listOfNotNull(
+            pickupLocation?.locationName?.trim()?.takeIf { it.isNotBlank() }
+                ?: pickupLocation?.name?.trim()?.takeIf { it.isNotBlank() },
+            dropoffLocation?.locationName?.trim()?.takeIf { it.isNotBlank() }
+                ?: dropoffLocation?.name?.trim()?.takeIf { it.isNotBlank() }
+        )
+    }.ifEmpty {
+        listOf("Stops not available")
+    }
 
     return CompanyTripUiModel(
         id = id,
-        title = primaryName,
-        status = statusLabel,
-        routeName = primaryName,
-        vehicleLabel = vehicleLabel,
-        pickupLabel = pickupLabel,
-        dropoffLabel = dropoffLabel,
-        customerLabel = customerLabel
+        routeId = routeId ?: id,
+        vehicleId = vehicleId ?: vehicle?.id ?: "",
+        driverId = driverId ?: "",
+        title = routeTitle,
+        vehicleLabel = vehicleDisplay,
+        stops = routeStops
     )
 }
 
@@ -120,10 +111,10 @@ fun CompanyTripsSection(
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
             text = "Company trips",
-            color = CompanyCardBlack,
-            fontSize = 17.sp,
+            color = CardText,
+            fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(start = 16.dp, top = 8.dp, bottom = 8.dp)
+            modifier = Modifier.padding(start = 16.dp, top = 12.dp, bottom = 10.dp)
         )
 
         when {
@@ -131,38 +122,31 @@ fun CompanyTripsSection(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 24.dp),
+                        .padding(vertical = 28.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator(
-                        color = CompanyCardBlack,
-                        trackColor = CompanyCardLightGray,
+                        color = CardText,
+                        trackColor = CardSurface,
                         strokeWidth = 3.dp
                     )
                 }
             }
 
             !error.isNullOrBlank() -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp)
-                ) {
-                    Text(
-                        text = error,
-                        color = CompanyCardBlack,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
+                Text(
+                    text = error,
+                    color = CardSecondary,
+                    fontSize = 13.sp,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+                )
             }
 
             trips.isEmpty() -> {
                 Text(
                     text = "No company trips available",
-                    color = CompanyCardGray,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium,
+                    color = CardSecondary,
+                    fontSize = 14.sp,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(24.dp)
@@ -175,7 +159,7 @@ fun CompanyTripsSection(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
                 ) {
-                    items(trips) { trip ->
+                    items(trips, key = { it.id }) { trip ->
                         CompanyTripCard(
                             trip = trip,
                             onViewClick = { onViewClick(trip) }
@@ -195,202 +179,179 @@ fun CompanyTripCard(
 ) {
     Surface(
         modifier = modifier
-            .fillMaxWidth()
-            .padding(vertical = 6.dp),
-        shape = RoundedCornerShape(12.dp),
-        color = CompanyCardBackground,
-        border = BorderStroke(1.dp, CompanyCardDivider),
-        shadowElevation = 2.dp
+            .width(310.dp)
+            .padding(vertical = 5.dp),
+        shape = RoundedCornerShape(18.dp),
+        color = CardBackground,
+        border = BorderStroke(1.dp, CardDivider),
+        shadowElevation = 1.dp
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(18.dp)) {
+            Text(
+                text = trip.title,
+                color = CardText,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            Spacer(Modifier.height(14.dp))
+
+            // Vehicle information is kept compact and easy to scan.
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(CardSurface, RoundedCornerShape(10.dp))
+                    .padding(horizontal = 11.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Company route",
-                        color = CompanyCardGray,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                    Spacer(Modifier.height(2.dp))
-                    Text(
-                        text = trip.title,
-                        color = CompanyCardBlack,
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-                Spacer(Modifier.width(12.dp))
-                Surface(color = CompanyCardLightGray, shape = RoundedCornerShape(50)) {
-                    Text(
-                        text = trip.status,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        color = CompanyCardBlack,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(12.dp))
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
             ) {
                 Icon(
                     imageVector = Icons.Default.DirectionsCar,
-                    contentDescription = null,
-                    tint = CompanyCardGray,
-                    modifier = Modifier.size(14.dp)
+                    contentDescription = "Vehicle",
+                    tint = CardText,
+                    modifier = Modifier.size(19.dp)
                 )
-                Spacer(Modifier.width(6.dp))
+                Spacer(Modifier.width(9.dp))
                 Text(
                     text = trip.vehicleLabel,
-                    color = CompanyCardGray,
-                    fontSize = 11.sp,
+                    color = CardText,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
             }
 
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(18.dp))
 
-            CompanyRouteSpine(
-                pickupLabel = trip.pickupLabel,
-                dropoffLabel = trip.dropoffLabel
+            Text(
+                text = "ROUTE",
+                color = CardSecondary,
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.sp
             )
 
-            Spacer(Modifier.height(14.dp))
-            HorizontalDivider(color = CompanyCardDivider, thickness = 1.dp)
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(12.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Surface(
-                    shape = CircleShape,
-                    color = CompanyCardLightGray,
-                    modifier = Modifier.size(40.dp)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = Icons.Default.LocationOn,
-                            contentDescription = null,
-                            tint = CompanyCardBlack,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
-                Spacer(Modifier.width(12.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = trip.customerLabel,
-                        color = CompanyCardBlack,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Text(
-                        text = trip.routeName,
-                        color = CompanyCardGray,
-                        fontSize = 11.sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+            Column(modifier = Modifier.fillMaxWidth()) {
+                trip.stops.forEachIndexed { index, stop ->
+                    CompanyStopRow(
+                        stopName = stop,
+                        stopNumber = index + 1,
+                        isLast = index == trip.stops.lastIndex
                     )
                 }
             }
 
             Spacer(Modifier.height(16.dp))
+            HorizontalDivider(color = CardDivider, thickness = 1.dp)
+            Spacer(Modifier.height(14.dp))
 
             Button(
                 onClick = onViewClick,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
-                shape = RoundedCornerShape(10.dp),
-                elevation = null,
+                shape = RoundedCornerShape(50),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = CompanyCardBlack,
-                    contentColor = CompanyCardBackground
-                )
+                    containerColor = CardText,
+                    contentColor = CardBackground
+                ),
+                contentPadding = PaddingValues(horizontal = 18.dp)
             ) {
-                Text("View", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                Text(
+                    text = "View trip",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
             }
         }
     }
 }
 
 @Composable
-private fun CompanyRouteSpine(
-    pickupLabel: String,
-    dropoffLabel: String
-) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        CompanyRouteStopRow(label = "Pickup", value = pickupLabel, showConnector = true)
-        CompanyRouteStopRow(label = "Drop-off", value = dropoffLabel, showConnector = false)
-    }
-}
-
-@Composable
-private fun CompanyRouteStopRow(
-    label: String,
-    value: String,
-    showConnector: Boolean
+private fun CompanyStopRow(
+    stopName: String,
+    stopNumber: Int,
+    isLast: Boolean
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(IntrinsicSize.Min)
+            .height(IntrinsicSize.Min),
+        verticalAlignment = Alignment.Top
     ) {
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
-                .width(20.dp)
-                .fillMaxHeight()
+                .width(24.dp)
+                .fillMaxHeight(),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(Modifier.height(5.dp))
             Box(
                 modifier = Modifier
-                    .size(10.dp)
-                    .background(CompanyCardBlack, CircleShape)
-            )
-            if (showConnector) {
+                    .padding(top = 2.dp)
+                    .size(19.dp)
+                    .background(
+                        color = if (stopNumber == 1) CardText else CardSurface,
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                if (stopNumber == 1) {
+                    Icon(
+                        imageVector = Icons.Default.LocationOn,
+                        contentDescription = "Starting point",
+                        tint = CardBackground,
+                        modifier = Modifier.size(12.dp)
+                    )
+                } else {
+                    Text(
+                        text = stopNumber.toString(),
+                        color = CardText,
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            if (!isLast) {
                 Box(
                     modifier = Modifier
+                        .padding(top = 3.dp, bottom = 3.dp)
                         .width(1.5.dp)
                         .weight(1f)
-                        .background(CompanyCardBlack.copy(alpha = 0.25f))
+                        .background(CardDivider)
                 )
             }
         }
-        Spacer(Modifier.width(12.dp))
+
+        Spacer(Modifier.width(10.dp))
+
         Column(
             modifier = Modifier
                 .weight(1f)
-                .padding(bottom = if (showConnector) 14.dp else 0.dp)
+                .padding(bottom = if (isLast) 0.dp else 18.dp)
         ) {
             Text(
-                text = label,
-                color = CompanyCardGray,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Medium
+                text = when {
+                    stopNumber == 1 -> "PICKUP"
+                    isLast -> "FINAL STOP"
+                    else -> "STOP $stopNumber"
+                },
+                color = CardSecondary,
+                fontSize = 9.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 0.7.sp
             )
-            Spacer(Modifier.height(2.dp))
+            Spacer(Modifier.height(3.dp))
             Text(
-                text = value,
-                color = CompanyCardBlack,
-                fontSize = 12.sp,
+                text = stopName,
+                color = CardText,
+                fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
+                lineHeight = 18.sp,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
@@ -400,7 +361,14 @@ private fun CompanyRouteStopRow(
 
 @Composable
 fun CompanyTripsPlaceholder() {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(text = "Company Trips", color = CompanyCardBlack)
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = "Company Trips",
+            color = CardText,
+            fontWeight = FontWeight.SemiBold
+        )
     }
 }
