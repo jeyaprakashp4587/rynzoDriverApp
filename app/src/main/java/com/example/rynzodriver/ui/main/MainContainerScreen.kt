@@ -1,5 +1,6 @@
 package com.example.rynzodriver.ui.main
 
+import android.net.Uri
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable

@@ -3,12 +3,14 @@ package com.example.rynzodriver.ui.companyTrips
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -32,8 +34,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -46,6 +52,18 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.rynzodriver.data.api.ApiService
 import com.example.rynzodriver.data.dto.company.CompanyRunStartRequest
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapProperties
+import com.google.maps.android.compose.MapUiSettings
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.Polyline
+import com.google.maps.android.compose.rememberCameraPositionState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -61,6 +79,7 @@ private val CompanyDetailSubText = Color(0xFF6C6C6C)
 private val CompanyDetailDivider = Color(0xFFEAEAEA)
 private val CompanyDetailAccent = Color(0xFF0E172A)
 private val CompanyDetailSurface = Color(0xFFF4F4F4)
+private val DefaultMapCenter = LatLng(13.0827, 80.2707)
 
 data class CompanyTripDetailUiState(
     val isStarting: Boolean = false,
@@ -139,195 +158,238 @@ fun CompanyTripDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val routeStops = stops.ifEmpty { listOf("Pickup stop", "Drop-off stop") }
+    val points = remember(routeStops) {
+        routeStops.mapIndexed { index, _ ->
+            val offset = index * 0.0035
+            val lat = DefaultMapCenter.latitude + offset
+            val lon = DefaultMapCenter.longitude + (if (index % 2 == 0) 0.003 else -0.003) * (index + 1)
+            LatLng(lat, lon)
+        }
+    }
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(points.firstOrNull() ?: DefaultMapCenter, 12f)
+    }
+    var mapReady by remember { mutableStateOf(false) }
 
-    Box(
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
             .background(CompanyDetailBg)
             .statusBarsPadding()
     ) {
-        Column(
+        val sheetMaxHeight = maxHeight * 0.52f
+
+        GoogleMap(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+                .padding(bottom = sheetMaxHeight),
+            cameraPositionState = cameraPositionState,
+            properties = MapProperties(isMyLocationEnabled = false),
+            uiSettings = MapUiSettings(
+                zoomControlsEnabled = false,
+                compassEnabled = false,
+                mapToolbarEnabled = false,
+                myLocationButtonEnabled = false
+            ),
+            onMapLoaded = { mapReady = true }
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                IconButton(onClick = onBack) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
-                        tint = CompanyDetailText
-                    )
-                }
-
-                Text(
-                    text = "Trip detail",
-                    color = CompanyDetailText,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Spacer(modifier = Modifier.size(40.dp))
+            if (points.size > 1) {
+                Polyline(points = points, color = CompanyDetailAccent, width = 7f)
             }
 
-            Surface(
+            points.forEachIndexed { index, latLng ->
+                Marker(
+                    state = MarkerState(position = latLng),
+                    title = if (index == 0) "Pickup" else if (index == points.lastIndex) "Drop-off" else "Stop ${index + 1}",
+                    snippet = routeStops.getOrNull(index) ?: "Stop",
+                    icon = BitmapDescriptorFactory.defaultMarker(
+                        if (index == 0) BitmapDescriptorFactory.HUE_GREEN else if (index == points.lastIndex) BitmapDescriptorFactory.HUE_RED else BitmapDescriptorFactory.HUE_AZURE
+                    )
+                )
+            }
+        }
+
+        IconButton(
+            onClick = onBack,
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(start = 16.dp, top = 12.dp)
+                .background(CompanyDetailCard, CircleShape)
+                .size(42.dp)
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "Back",
+                tint = CompanyDetailText
+            )
+        }
+
+        Surface(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .heightIn(max = sheetMaxHeight),
+            shape = RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp),
+            color = CompanyDetailCard,
+            shadowElevation = 12.dp
+        ) {
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                shape = RoundedCornerShape(18.dp),
-                color = CompanyDetailCard,
-                tonalElevation = 1.dp
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 18.dp, vertical = 14.dp)
             ) {
-                Column(modifier = Modifier.padding(18.dp)) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .width(42.dp)
+                        .height(4.dp)
+                        .background(CompanyDetailDivider, RoundedCornerShape(50))
+                )
+
+                Spacer(Modifier.height(14.dp))
+
+                Text(
+                    text = title,
+                    color = CompanyDetailText,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Spacer(Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(CompanyDetailSurface, RoundedCornerShape(12.dp))
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.DirectionsCar,
+                        contentDescription = null,
+                        tint = CompanyDetailText,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.width(10.dp))
                     Text(
-                        text = title,
+                        text = vehicleLabel.ifBlank { vehicleId.ifBlank { "Vehicle" } },
                         color = CompanyDetailText,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 2,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-
-                    Spacer(Modifier.height(14.dp))
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(CompanyDetailSurface, RoundedCornerShape(12.dp))
-                            .padding(horizontal = 12.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.DirectionsCar,
-                            contentDescription = null,
-                            tint = CompanyDetailText,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(Modifier.width(10.dp))
-                        Text(
-                            text = vehicleLabel.ifBlank { vehicleId.ifBlank { "Vehicle" } },
-                            color = CompanyDetailText,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-
-                    Spacer(Modifier.height(18.dp))
-
-                    DetailRow(label = "Route ID", value = routeId.ifBlank { "-" })
-                    DetailRow(label = "Driver ID", value = driverId.ifBlank { "-" })
-                    DetailRow(label = "Vehicle ID", value = vehicleId.ifBlank { "-" })
-
-                    Spacer(Modifier.height(16.dp))
-
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = null,
-                            tint = CompanyDetailSubText,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            text = if (driverId.isBlank()) "Driver assigned" else "Driver attached",
-                            color = CompanyDetailSubText,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
                 }
-            }
 
-            Spacer(Modifier.height(18.dp))
+                Spacer(Modifier.height(16.dp))
 
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                shape = RoundedCornerShape(18.dp),
-                color = CompanyDetailCard,
-                tonalElevation = 1.dp
-            ) {
-                Column(modifier = Modifier.padding(18.dp)) {
+                DetailRow(label = "Route ID", value = routeId.ifBlank { "-" })
+                DetailRow(label = "Driver ID", value = driverId.ifBlank { "-" })
+                DetailRow(label = "Vehicle ID", value = vehicleId.ifBlank { "-" })
+
+                Spacer(Modifier.height(12.dp))
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = null,
+                        tint = CompanyDetailSubText,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(Modifier.width(8.dp))
                     Text(
-                        text = "Route stops",
+                        text = if (driverId.isBlank()) "Driver assigned" else "Driver attached",
                         color = CompanyDetailSubText,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 0.8.sp
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium
                     )
+                }
 
-                    Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(16.dp))
+                HorizontalDivider(color = CompanyDetailDivider, thickness = 1.dp)
+                Spacer(Modifier.height(16.dp))
 
-                    routeStops.forEachIndexed { index, stopName ->
-                        CompanyDetailStopRow(
-                            stopName = stopName,
-                            stopNumber = index + 1,
-                            isLast = index == routeStops.lastIndex
+                Text(
+                    text = "Route stops",
+                    color = CompanyDetailSubText,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.8.sp
+                )
+
+                Spacer(Modifier.height(12.dp))
+
+                routeStops.forEachIndexed { index, stopName ->
+                    CompanyDetailStopRow(
+                        stopName = stopName,
+                        stopNumber = index + 1,
+                        isLast = index == routeStops.lastIndex
+                    )
+                }
+
+                val errorMessage = uiState.errorMessage
+                val successMessage = uiState.successMessage
+
+                if (!errorMessage.isNullOrBlank()) {
+                    Text(
+                        text = errorMessage,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(vertical = 12.dp)
+                    )
+                }
+
+                if (!successMessage.isNullOrBlank()) {
+                    Text(
+                        text = successMessage,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(vertical = 12.dp)
+                    )
+                }
+
+                Spacer(Modifier.height(16.dp))
+
+                Button(
+                    onClick = { viewModel.startCompanyRun(routeId, vehicleId) },
+                    enabled = !uiState.isStarting,
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = CompanyDetailAccent,
+                        contentColor = Color.White
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(54.dp)
+                ) {
+                    if (uiState.isStarting) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp,
+                            color = Color.White,
+                            trackColor = Color.White.copy(alpha = 0.3f)
                         )
+                        Spacer(Modifier.size(8.dp))
                     }
-                }
-            }
-
-            val errorMessage = uiState.errorMessage
-            val successMessage = uiState.successMessage
-
-            if (!errorMessage.isNullOrBlank()) {
-                Text(
-                    text = errorMessage,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
-                )
-            }
-
-            if (!successMessage.isNullOrBlank()) {
-                Text(
-                    text = successMessage,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
-                )
-            }
-
-            Spacer(Modifier.height(24.dp))
-
-            Button(
-                onClick = { viewModel.startCompanyRun(routeId, vehicleId) },
-                enabled = !uiState.isStarting,
-                shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = CompanyDetailAccent,
-                    contentColor = Color.White
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .height(54.dp)
-            ) {
-                if (uiState.isStarting) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(18.dp),
-                        strokeWidth = 2.dp,
-                        color = Color.White,
-                        trackColor = Color.White.copy(alpha = 0.3f)
+                    Text(
+                        text = if (uiState.isStarting) "Starting trip..." else "Start company trip",
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 15.sp
                     )
-                    Spacer(Modifier.size(8.dp))
                 }
-                Text(
-                    text = if (uiState.isStarting) "Starting trip..." else "Start company trip",
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 15.sp
-                )
-            }
 
-            Spacer(Modifier.height(30.dp))
+                Spacer(Modifier.height(20.dp))
+            }
+        }
+
+        LaunchedEffect(points, mapReady) {
+            if (!mapReady || points.isEmpty()) return@LaunchedEffect
+            if (points.size == 1) {
+                cameraPositionState.animate(CameraUpdateFactory.newLatLngZoom(points.first(), 15f))
+            } else {
+                val bounds = LatLngBounds.builder().apply { points.forEach(::include) }.build()
+                cameraPositionState.animate(CameraUpdateFactory.newLatLngBounds(bounds, 120))
+            }
         }
     }
 }
