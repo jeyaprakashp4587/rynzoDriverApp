@@ -22,3 +22,15 @@ data class DriverVehicleLocationDto(
     @SerializedName("type") val type: String? = null,
     @SerializedName("coordinates") val coordinates: List<Double> = emptyList()
 )
+
+data class DriverProfileResponse(
+    @SerializedName("success") val success: Boolean = false,
+    @SerializedName("message") val message: String? = null,
+    @SerializedName("data") val data: DriverProfileDto? = null
+)
+
+data class DriverProfileDto(
+    @SerializedName("_id") val id: String = "",
+    @SerializedName("tripStatus") val tripStatus: String? = null,
+    @SerializedName("availability") val availability: String? = null
+)

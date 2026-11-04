@@ -52,6 +52,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.rynzodriver.data.api.ApiService
 import com.example.rynzodriver.data.dto.company.CompanyRunStartRequest
+import com.example.rynzodriver.util.DEFAULT_MAP_CENTER
+import com.example.rynzodriver.util.buildMapRoute
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
@@ -79,7 +81,6 @@ private val CompanyDetailSubText = Color(0xFF6C6C6C)
 private val CompanyDetailDivider = Color(0xFFEAEAEA)
 private val CompanyDetailAccent = Color(0xFF0E172A)
 private val CompanyDetailSurface = Color(0xFFF4F4F4)
-private val DefaultMapCenter = LatLng(13.0827, 80.2707)
 
 data class CompanyTripDetailUiState(
     val isStarting: Boolean = false,
@@ -158,16 +159,10 @@ fun CompanyTripDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val routeStops = stops.ifEmpty { listOf("Pickup stop", "Drop-off stop") }
-    val points = remember(routeStops) {
-        routeStops.mapIndexed { index, _ ->
-            val offset = index * 0.0035
-            val lat = DefaultMapCenter.latitude + offset
-            val lon = DefaultMapCenter.longitude + (if (index % 2 == 0) 0.003 else -0.003) * (index + 1)
-            LatLng(lat, lon)
-        }
-    }
+    val mapRoute = remember(routeStops) { buildMapRoute(routeStops, DEFAULT_MAP_CENTER) }
+    val points = mapRoute.points
     val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(points.firstOrNull() ?: DefaultMapCenter, 12f)
+        position = CameraPosition.fromLatLngZoom(points.firstOrNull() ?: DEFAULT_MAP_CENTER, 12f)
     }
     var mapReady by remember { mutableStateOf(false) }
 

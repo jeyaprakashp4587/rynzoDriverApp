@@ -88,6 +88,7 @@ fun HomeScreen(
             lastLocation = locationState.lastLocation,
             userName = "John Doe",
             onSelectVehicleClick = {
+                if (uiState.isTripActive) return@TopSection
                 viewModel.fetchDriverVehicles()
                 viewModel.openVehicleSheet()
             }
@@ -155,7 +156,7 @@ fun HomeScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 4.dp)
-                            .clickable { viewModel.selectVehicle(vehicle) },
+                            .clickable(enabled = !uiState.isTripActive) { viewModel.selectVehicle(vehicle) },
                         color = if (uiState.selectedVehicleId == vehicle.id) {
                             MaterialTheme.colorScheme.primaryContainer
                         } else {

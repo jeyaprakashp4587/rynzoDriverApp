@@ -58,6 +58,7 @@ fun TopSection(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val isOnDuty = uiState.isOnDuty
+    val isTripActive = uiState.isTripActive
     val selectedVehicleName = viewModel.selectedVehicle?.let { vehicle ->
         listOfNotNull(vehicle.vehicleModel, vehicle.vehicleNumber).firstOrNull { it.isNotBlank() }
             ?: "Vehicle ${vehicle.id.take(4)}"
@@ -185,6 +186,7 @@ fun TopSection(
 
                     Switch(
                         checked = isOnDuty,
+                        enabled = !isTripActive,
                         onCheckedChange = { viewModel.setOnDuty(it) },
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = HeaderWhite,
@@ -202,6 +204,7 @@ fun TopSection(
 
             OutlinedButton(
                 onClick = onSelectVehicleClick,
+                enabled = !isTripActive,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.outlinedButtonColors(
@@ -228,7 +231,7 @@ fun TopSection(
                         )
                         Spacer(Modifier.width(8.dp))
                         Text(
-                            text = selectedVehicleName ?: "Select vehicle",
+                            text = if (isTripActive) "Trip in progress" else selectedVehicleName ?: "Select vehicle",
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold,
                             maxLines = 1,
@@ -237,7 +240,7 @@ fun TopSection(
                     }
 
                     Text(
-                        text = "Change",
+                        text = if (isTripActive) "Locked" else "Change",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold
                     )

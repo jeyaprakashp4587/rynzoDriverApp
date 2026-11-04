@@ -26,11 +26,65 @@ class HomeViewModel @Inject constructor(
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     init {
+        fetchDriverTripStatus()
         fetchDriverVehicles()
+    }
+
+    fun fetchDriverTripStatus() {
+        viewModelScope.launch {
+            try {
+                val response = apiService.getDriverProfile()
+                if (response.isSuccessful) {
+                    val tripStatus = response.body()?.data?.tripStatus?.trim()?.uppercase()
+                    val isTripActive = tripStatus == "ON_TRIP"
+
+                    _uiState.update {
+                        it.copy(
+                            driverTripStatus = tripStatus ?: "IDLE",
+                            isTripActive = isTripActive,
+                            companyTripsError = if (isTripActive) {
+                                "Trip in progress. Vehicle selection and location tracking are locked."
+                            } else it.companyTripsError
+                        )
+                    }
+
+                    if (isTripActive) {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                selectedVehicleId = null,
+                                vehicles = emptyList(),
+                                companyTrips = emptyList()
+                            )
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(
+                        driverTripStatus = "IDLE",
+                        isTripActive = false
+                    )
+                }
+            }
+        }
     }
 
     fun fetchDriverVehicles() {
         viewModelScope.launch {
+            if (_uiState.value.isTripActive) {
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        vehicles = emptyList(),
+                        selectedVehicleId = null,
+                        companyTrips = emptyList(),
+                        companyTripsError = "Trip in progress. Vehicle selection is locked."
+                    )
+                }
+                return@launch
+            }
+
             _uiState.update { it.copy(isLoading = true, error = null) }
 
             val userId = dataStoreManager.userId.first()
@@ -160,6 +214,15 @@ class HomeViewModel @Inject constructor(
     }
 
     fun selectVehicle(vehicle: DriverVehicleDto) {
+        if (_uiState.value.isTripActive) {
+            _uiState.update {
+                it.copy(
+                    companyTripsError = "Trip in progress. You cannot change the vehicle while on trip."
+                )
+            }
+            return
+        }
+
         _uiState.update {
             it.copy(
                 selectedVehicleId = vehicle.id,
@@ -170,6 +233,9 @@ class HomeViewModel @Inject constructor(
     }
 
     fun setOnDuty(isOnDuty: Boolean) {
+        if (_uiState.value.isTripActive) {
+            return
+        }
         _uiState.update { it.copy(isOnDuty = isOnDuty) }
     }
 
@@ -184,6 +250,8 @@ data class HomeUiState(
     val selectedVehicleId: String? = null,
     val isVehicleSheetOpen: Boolean = false,
     val isOnDuty: Boolean = false,
+    val driverTripStatus: String = "IDLE",
+    val isTripActive: Boolean = false,
     val companyTrips: List<CompanyTripUiModel> = emptyList(),
     val isCompanyTripsLoading: Boolean = false,
     val companyTripsError: String? = null,
