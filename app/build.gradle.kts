@@ -24,12 +24,12 @@ android {
         buildConfigField(
             "String",
             "API_BASE_URL",
-            "\"${project.findProperty("API_BASE_URL") ?: "http://192.168.1.23:8000/"}\""
+            "\"${project.findProperty("API_BASE_URL") ?: "http://192.168.0.110:8000/"}\""
         )
         buildConfigField(
             "String",
             "LIVE_TRACKING_WS_URL",
-            "\"${project.findProperty("LIVE_TRACKING_WS_URL") ?: "ws://192.168.1.23:8080"}\""
+            "\"${project.findProperty("LIVE_TRACKING_WS_URL") ?: "ws://192.168.0.110:8080"}\""
         )
     }
 
