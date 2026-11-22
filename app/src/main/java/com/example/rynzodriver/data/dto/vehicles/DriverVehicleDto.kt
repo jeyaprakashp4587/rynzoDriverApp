@@ -29,8 +29,29 @@ data class DriverProfileResponse(
     @SerializedName("data") val data: DriverProfileDto? = null
 )
 
+data class DriverActiveTripDto(
+    @SerializedName("activeTripId") val activeTripId: String? = null,
+    @SerializedName("activeTripType") val activeTripType: String? = null
+)
+
 data class DriverProfileDto(
     @SerializedName("_id") val id: String = "",
     @SerializedName("tripStatus") val tripStatus: String? = null,
-    @SerializedName("availability") val availability: String? = null
+    @SerializedName("availability") val availability: String? = null,
+    @SerializedName("activeTrip") val activeTrip: DriverActiveTripDto? = null
+)
+
+data class ActiveTripResponse(
+    @SerializedName("success") val success: Boolean = false,
+    @SerializedName("message") val message: String? = null,
+    @SerializedName("data") val data: ActiveTripDataDto? = null
+)
+
+data class ActiveTripDataDto(
+    @SerializedName("isTripActive") val isTripActive: Boolean = false,
+    @SerializedName("activeTripId") val activeTripId: String? = null,
+    @SerializedName("activeTripType") val activeTripType: String? = null,
+    @SerializedName("driverId") val driverId: String? = null,
+    @SerializedName("tripStatus") val tripStatus: String? = null,
+    @SerializedName("companyTrip") val companyTrip: com.example.rynzodriver.data.dto.company.CompanyTripDto? = null
 )

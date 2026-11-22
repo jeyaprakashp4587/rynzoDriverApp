@@ -16,6 +16,9 @@ interface ApiService {
     @GET("api/drivers/me")
     suspend fun getDriverProfile(): Response<DriverProfileResponse>
 
+    @GET("api/drivers/activeTrip")
+    suspend fun getDriverActiveTrip(): Response<com.example.rynzodriver.data.dto.vehicles.ActiveTripResponse>
+
     @GET("api/vehicles/driver/list")
     suspend fun getDriverVehicles(
         @Query("userId") userId: String

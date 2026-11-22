@@ -107,7 +107,7 @@ fun MainContainerScreen() {
             ) { backStackEntry ->
                 val routeId = backStackEntry.arguments?.getString("routeId") ?: return@composable
                 val vehicleId = backStackEntry.arguments?.getString("vehicleId") ?: return@composable
-                val driverId = backStackEntry.arguments?.getString("driverId") ?: ""
+                val driverId = backStackEntry.arguments?.getString("driverId")?.let { if (it == "none") "" else it } ?: ""
                 val title = Uri.decode(backStackEntry.arguments?.getString("title") ?: "Company trip")
                 val vehicleLabel = Uri.decode(backStackEntry.arguments?.getString("vehicleLabel") ?: "Vehicle")
                 val stopsRaw = Uri.decode(backStackEntry.arguments?.getString("stops") ?: "")

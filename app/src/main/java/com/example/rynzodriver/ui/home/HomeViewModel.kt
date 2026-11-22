@@ -30,25 +30,116 @@ class HomeViewModel @Inject constructor(
         fetchDriverVehicles()
     }
 
+    fun consumeNavigationEvent() {
+        _uiState.update { it.copy(navigationEvent = null) }
+    }
+
     fun fetchDriverTripStatus() {
         viewModelScope.launch {
             try {
+                val activeTripResponse = apiService.getDriverActiveTrip()
+                if (activeTripResponse.isSuccessful && activeTripResponse.body()?.data != null) {
+                    val activeData = activeTripResponse.body()!!.data!!
+                    val isTripActive = activeData.isTripActive && !activeData.activeTripId.isNullOrBlank()
+
+                    if (isTripActive) {
+                        val activeTripId = activeData.activeTripId!!
+                        val activeTripType = (activeData.activeTripType ?: "").trim().uppercase()
+                        val isCompanyTrip = activeTripType == "COMPANY_TRIP" || activeTripType == "COMPANY"
+
+                        _uiState.update {
+                            it.copy(
+                                driverTripStatus = "ON_TRIP",
+                                isTripActive = true,
+                                activeTripId = activeTripId,
+                                activeTripType = activeTripType,
+                                isLoading = false,
+                                selectedVehicleId = null,
+                                vehicles = emptyList(),
+                                companyTrips = emptyList(),
+                                companyTripsError = "Trip in progress. Vehicle selection and location tracking are locked."
+                            )
+                        }
+
+                        if (isCompanyTrip) {
+                            val companyTripUiModel = activeData.companyTrip?.toUiModel()
+                                ?: CompanyTripUiModel(
+                                    id = activeTripId,
+                                    routeId = activeTripId,
+                                    vehicleId = "",
+                                    driverId = activeData.driverId.orEmpty(),
+                                    title = "Active Company Trip",
+                                    vehicleLabel = "Vehicle",
+                                    stops = listOf("Active Route")
+                                )
+                            _uiState.update {
+                                it.copy(navigationEvent = HomeNavigationEvent.NavigateToCompanyTrip(companyTripUiModel))
+                            }
+                        } else {
+                            _uiState.update {
+                                it.copy(navigationEvent = HomeNavigationEvent.NavigateToGenericTrip(activeTripId))
+                            }
+                        }
+                        return@launch
+                    }
+                }
+
                 val response = apiService.getDriverProfile()
                 if (response.isSuccessful) {
-                    val tripStatus = response.body()?.data?.tripStatus?.trim()?.uppercase()
-                    val isTripActive = tripStatus == "ON_TRIP"
+                    val profileData = response.body()?.data
+                    val tripStatus = profileData?.tripStatus?.trim()?.uppercase()
+                    val activeTrip = profileData?.activeTrip
+                    val hasActiveTrip = !activeTrip?.activeTripId.isNullOrBlank()
+                    val isTripActive = tripStatus == "ON_TRIP" || hasActiveTrip
+
+                    val activeTripId = activeTrip?.activeTripId
+                    val activeTripType = activeTrip?.activeTripType?.trim()?.uppercase()
 
                     _uiState.update {
                         it.copy(
                             driverTripStatus = tripStatus ?: "IDLE",
                             isTripActive = isTripActive,
+                            activeTripId = activeTripId,
+                            activeTripType = activeTripType,
                             companyTripsError = if (isTripActive) {
                                 "Trip in progress. Vehicle selection and location tracking are locked."
                             } else it.companyTripsError
                         )
                     }
 
-                    if (isTripActive) {
+                    if (isTripActive && !activeTripId.isNullOrBlank()) {
+                        val isCompanyTrip = activeTripType == "COMPANY_TRIP" || activeTripType == "COMPANY"
+                        if (isCompanyTrip) {
+                            val companyTripUiModel = CompanyTripUiModel(
+                                id = activeTripId,
+                                routeId = activeTripId,
+                                vehicleId = "",
+                                driverId = profileData?.id.orEmpty(),
+                                title = "Active Company Trip",
+                                vehicleLabel = "Vehicle",
+                                stops = listOf("Active Route")
+                            )
+                            _uiState.update {
+                                it.copy(
+                                    isLoading = false,
+                                    selectedVehicleId = null,
+                                    vehicles = emptyList(),
+                                    companyTrips = emptyList(),
+                                    navigationEvent = HomeNavigationEvent.NavigateToCompanyTrip(companyTripUiModel)
+                                )
+                            }
+                        } else {
+                            _uiState.update {
+                                it.copy(
+                                    isLoading = false,
+                                    selectedVehicleId = null,
+                                    vehicles = emptyList(),
+                                    companyTrips = emptyList(),
+                                    navigationEvent = HomeNavigationEvent.NavigateToGenericTrip(activeTripId)
+                                )
+                            }
+                        }
+                    } else if (isTripActive) {
                         _uiState.update {
                             it.copy(
                                 isLoading = false,
@@ -244,6 +335,11 @@ class HomeViewModel @Inject constructor(
             ?: _uiState.value.vehicles.firstOrNull()
 }
 
+sealed class HomeNavigationEvent {
+    data class NavigateToCompanyTrip(val trip: CompanyTripUiModel) : HomeNavigationEvent()
+    data class NavigateToGenericTrip(val tripId: String) : HomeNavigationEvent()
+}
+
 data class HomeUiState(
     val isLoading: Boolean = false,
     val vehicles: List<DriverVehicleDto> = emptyList(),
@@ -252,6 +348,9 @@ data class HomeUiState(
     val isOnDuty: Boolean = false,
     val driverTripStatus: String = "IDLE",
     val isTripActive: Boolean = false,
+    val activeTripId: String? = null,
+    val activeTripType: String? = null,
+    val navigationEvent: HomeNavigationEvent? = null,
     val companyTrips: List<CompanyTripUiModel> = emptyList(),
     val isCompanyTripsLoading: Boolean = false,
     val companyTripsError: String? = null,

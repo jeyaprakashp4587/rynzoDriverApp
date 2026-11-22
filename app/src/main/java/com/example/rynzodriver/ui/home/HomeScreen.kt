@@ -47,6 +47,21 @@ fun HomeScreen(
         contract = ActivityResultContracts.StartIntentSenderForResult()
     ) { }
 
+    LaunchedEffect(uiState.navigationEvent) {
+        uiState.navigationEvent?.let { event ->
+            when (event) {
+                is HomeNavigationEvent.NavigateToCompanyTrip -> {
+                    navController.navigate(Screen.CompanyTripDetail.createRoute(event.trip))
+                    viewModel.consumeNavigationEvent()
+                }
+                is HomeNavigationEvent.NavigateToGenericTrip -> {
+                    navController.navigate(Screen.TripDetail.createRoute(event.tripId))
+                    viewModel.consumeNavigationEvent()
+                }
+            }
+        }
+    }
+
     LaunchedEffect(uiState.isOnDuty, uiState.selectedVehicleId) {
         if (uiState.isOnDuty) {
             val selectedVehicleId = uiState.selectedVehicleId
