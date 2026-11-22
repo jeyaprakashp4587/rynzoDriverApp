@@ -49,7 +49,15 @@ class DataStoreManager @Inject constructor(@ApplicationContext private val conte
 
     val accessToken: Flow<String?> = context.dataStore.data.map { it[ACCESS_TOKEN] }
 
+    val refreshToken: Flow<String?> = context.dataStore.data.map { it[REFRESH_TOKEN] }
+
     val userId: Flow<String?> = context.dataStore.data.map { it[USER_ID] }
+
+    suspend fun updateAccessToken(newAccessToken: String) {
+        context.dataStore.edit { preferences ->
+            preferences[ACCESS_TOKEN] = newAccessToken
+        }
+    }
 
     suspend fun hasValidSession(): Boolean {
         val preferences = context.dataStore.data.first()

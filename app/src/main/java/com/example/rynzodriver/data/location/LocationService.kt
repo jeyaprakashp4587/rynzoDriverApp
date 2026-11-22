@@ -14,6 +14,7 @@ import com.example.rynzodriver.R
 import com.example.rynzodriver.data.dto.LocationUpdateDto
 import com.example.rynzodriver.data.local.DataStoreManager
 import com.example.rynzodriver.data.websocket.WebSocketState
+import com.example.rynzodriver.domain.repository.auth.AuthRepository
 import com.example.rynzodriver.domain.repository.websocket.WebSocketRepository
 import com.google.gson.Gson
 import dagger.hilt.android.AndroidEntryPoint
@@ -46,6 +47,9 @@ class LocationService : Service() {
     @Inject
     lateinit var dataStoreManager: DataStoreManager
 
+    @Inject
+    lateinit var authRepository: AuthRepository
+
     override fun onBind(p0: Intent?): IBinder? {
         return null
     }
@@ -53,6 +57,7 @@ class LocationService : Service() {
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
+        observeWebSocketMessages()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -107,24 +112,64 @@ class LocationService : Service() {
 
     private fun connectToWebSocket() {
         serviceScope.launch {
-            val driverId = dataStoreManager.userId.first() ?: run {
-                Log.e("LocationService", "Missing userId for websocket connection")
+            val token = dataStoreManager.accessToken.first()
+            if (token.isNullOrBlank()) {
+                Log.e("LocationService", "Missing accessToken for websocket connection")
                 return@launch
             }
 
             val liveBaseUrl = BuildConfig.LIVE_TRACKING_WS_URL.trimEnd('/')
-            val wsUrl = liveBaseUrl + "/connect?userId=$driverId"
+            val wsUrl = "$liveBaseUrl/connect?token=$token"
             Log.d("LocationService", "Connecting to live tracking WebSocket: $wsUrl")
             webSocketRepository.connect(wsUrl)
 
             val connected = webSocketRepository.connectionState.first { it is WebSocketState.Connected }
             Log.d("LocationService", "WebSocket connected state reached: $connected")
 
+            val authMessage = """{"auth":{"token":"$token"}}"""
+            webSocketRepository.sendMessage(authMessage)
+
             val vehicleId = activeVehicleId
             if (!vehicleId.isNullOrBlank()) {
                 val joinMessage = """{"type":"joinVehicle","vehicleId":"$vehicleId"}"""
                 val joined = webSocketRepository.sendMessage(joinMessage)
                 Log.d("LocationService", "Join vehicle room result: $joined -> $joinMessage")
+            }
+        }
+    }
+
+    private fun observeWebSocketMessages() {
+        webSocketRepository.incomingMessages
+            .onEach { message ->
+                Log.d("LocationService", "WebSocket incoming message: $message")
+                if (message.contains("AUTH_TOKEN_EXPIRED") || message.contains("AUTHENTICATION_REQUIRED")) {
+                    handleTokenExpirationAndReconnect()
+                }
+            }
+            .launchIn(serviceScope)
+    }
+
+    private fun handleTokenExpirationAndReconnect() {
+        serviceScope.launch {
+            Log.w("LocationService", "Access token expired according to Rust WebSocket server. Refreshing token via Node.js...")
+            val refreshResult = authRepository.refreshAccessToken()
+            refreshResult.onSuccess { newAccessToken ->
+                Log.i("LocationService", "Successfully refreshed access token via Node.js. Reconnecting WebSocket...")
+                webSocketRepository.disconnect()
+                val liveBaseUrl = BuildConfig.LIVE_TRACKING_WS_URL.trimEnd('/')
+                val wsUrl = "$liveBaseUrl/connect?token=$newAccessToken"
+                webSocketRepository.connect(wsUrl)
+                val connected = webSocketRepository.connectionState.first { it is WebSocketState.Connected }
+                if (connected is WebSocketState.Connected) {
+                    webSocketRepository.sendMessage("""{"auth":{"token":"$newAccessToken"}}""")
+                    activeVehicleId?.let { vId ->
+                        webSocketRepository.sendMessage("""{"type":"joinVehicle","vehicleId":"$vId"}""")
+                    }
+                }
+            }.onFailure { e ->
+                Log.e("LocationService", "Failed to refresh token via Node.js: ${e.message}. Stopping tracking session.", e)
+                dataStoreManager.clearAll()
+                stop()
             }
         }
     }

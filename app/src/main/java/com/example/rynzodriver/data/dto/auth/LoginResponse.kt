@@ -39,3 +39,13 @@ data class TokensDto(
     @SerializedName("refreshToken")
     val refreshToken: String
 )
+
+data class RefreshTokenRequest(
+    @SerializedName("refreshToken")
+    val refreshToken: String
+)
+
+data class RefreshTokenResponse(
+    @SerializedName("accessToken")
+    val accessToken: String
+)
