@@ -231,7 +231,7 @@ fun TopSection(
                         )
                         Spacer(Modifier.width(8.dp))
                         Text(
-                            text = if (isTripActive) "Trip in progress" else selectedVehicleName ?: "Select vehicle",
+                            text = if (isTripActive) "${selectedVehicleName ?: "Vehicle"} (On Trip)" else selectedVehicleName ?: "Select vehicle",
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold,
                             maxLines = 1,

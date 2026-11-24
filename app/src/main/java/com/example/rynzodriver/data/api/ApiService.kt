@@ -3,6 +3,7 @@ package com.example.rynzodriver.data.api
 import com.example.rynzodriver.data.dto.company.CompanyRunStartRequest
 import com.example.rynzodriver.data.dto.company.CompanyRunStartResponse
 import com.example.rynzodriver.data.dto.company.CompanyTripListResponse
+import com.example.rynzodriver.data.dto.vehicles.ActiveTripResponse
 import com.example.rynzodriver.data.dto.vehicles.DriverProfileResponse
 import com.example.rynzodriver.data.dto.vehicles.DriverVehicleListResponse
 import retrofit2.Response
@@ -17,7 +18,7 @@ interface ApiService {
     suspend fun getDriverProfile(): Response<DriverProfileResponse>
 
     @GET("api/drivers/activeTrip")
-    suspend fun getDriverActiveTrip(): Response<com.example.rynzodriver.data.dto.vehicles.ActiveTripResponse>
+    suspend fun getDriverActiveTrip(): Response<ActiveTripResponse>
 
     @GET("api/vehicles/driver/list")
     suspend fun getDriverVehicles(

@@ -52,6 +52,7 @@ data class ActiveTripDataDto(
     @SerializedName("activeTripId") val activeTripId: String? = null,
     @SerializedName("activeTripType") val activeTripType: String? = null,
     @SerializedName("driverId") val driverId: String? = null,
+    @SerializedName("vehicleId") val vehicleId: String? = null,
     @SerializedName("tripStatus") val tripStatus: String? = null,
     @SerializedName("companyTrip") val companyTrip: com.example.rynzodriver.data.dto.company.CompanyTripDto? = null
 )
