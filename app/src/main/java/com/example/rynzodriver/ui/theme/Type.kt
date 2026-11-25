@@ -1,13 +1,23 @@
 package com.example.rynzodriver.ui.theme
 
+// Senior explanation:
+// Application colors, typography, and Material 3 theme behavior.
+// Read top-down: imports provide dependencies, declarations define state/contracts, and the function body coordinates them.
+
+// File purpose: This file defines the application theme, colors, or typography.
+
+// Jetpack Compose imports: declarative UI containers, state, modifiers, colors, and widgets.
 import androidx.compose.material3.Typography as MaterialTypography
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+// Project imports: shared domain, data, UI, navigation, or utility types from this app.
 import com.example.rynzodriver.R
 
+// Delegation: `by` forwards property get/set behavior to the object on the right instead of storing the value directly here.
+// Read-only property: `val` binds the value once. Later reassignment of this property name is prevented by Kotlin.
 val InterFontFamily = FontFamily(
     Font(R.font.inter_variable, FontWeight.Normal),
     Font(R.font.inter_variable, FontWeight.Medium),
@@ -15,6 +25,8 @@ val InterFontFamily = FontFamily(
     Font(R.font.inter_variable, FontWeight.Bold)
 )
 
+// Delegation: `by` forwards property get/set behavior to the object on the right instead of storing the value directly here.
+// Read-only property: `val` binds the value once. Later reassignment of this property name is prevented by Kotlin.
 val InterTypography: MaterialTypography = MaterialTypography(
     displayLarge = TextStyle(fontFamily = InterFontFamily),
     displayMedium = TextStyle(fontFamily = InterFontFamily),
@@ -57,4 +69,6 @@ val InterTypography: MaterialTypography = MaterialTypography(
     )
 )
 
+// Delegation: `by` forwards property get/set behavior to the object on the right instead of storing the value directly here.
+// Read-only property: `val` binds the value once. Later reassignment of this property name is prevented by Kotlin.
 val Typography: MaterialTypography = InterTypography

@@ -1,5 +1,12 @@
 package com.example.rynzodriver.ui.trips
 
+// Senior explanation:
+// Requested-trip presentation, list/detail state, and trip acceptance flow.
+// Read top-down: imports provide dependencies, declarations define state/contracts, and the function body coordinates them.
+
+// File purpose: This file implements trip requests, trip details, and their Compose UI.
+
+// Jetpack Compose imports: declarative UI containers, state, modifiers, colors, and widgets.
 import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
@@ -40,25 +47,37 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+// Hilt imports: dependency injection annotations and ViewModel integration.
 import androidx.hilt.navigation.compose.hiltViewModel
+// Project imports: shared domain, data, UI, navigation, or utility types from this app.
 import com.example.rynzodriver.domain.model.trips.Stop
 import com.example.rynzodriver.domain.model.trips.StopType
 import com.example.rynzodriver.domain.model.trips.Trip
 
+// Immutable configuration: `val` gives this value one read-only binding; the expression is resolved when execution reaches this line.
 private val CardBackground = Color(0xFFFFFFFF)
+// Immutable configuration: `val` gives this value one read-only binding; the expression is resolved when execution reaches this line.
 private val CardBlack = Color(0xFF000000)
+// Immutable configuration: `val` gives this value one read-only binding; the expression is resolved when execution reaches this line.
 private val CardLightGray = Color(0xFFF3F3F3)
+// Immutable configuration: `val` gives this value one read-only binding; the expression is resolved when execution reaches this line.
 private val CardDivider = Color(0xFFEAEAEA)
+// Immutable configuration: `val` gives this value one read-only binding; the expression is resolved when execution reaches this line.
 private val CardGray = Color(0xFF6B6B6B)
 
+// Compose entry: recomposition invokes this function to describe the current UI state.
 @Composable
+// Function `OrdersScreen`: normal synchronous execution is used unless the body starts a coroutine itself.
 fun OrdersScreen() {
+// Compose modifier chain: layout flags are applied from left to right, producing the final size/padding/scroll behavior.
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Text(text = "Orders Screen Placeholder", color = CardBlack)
     }
 }
 
+// Compose entry: recomposition invokes this function to describe the current UI state.
 @Composable
+// Function `RequestedTripsCard`: normal synchronous execution is used unless the body starts a coroutine itself.
 fun RequestedTripsCard(
     trip: Trip,
     onViewClick: () -> Unit,
@@ -69,13 +88,14 @@ fun RequestedTripsCard(
             .fillMaxWidth()
             .widthIn(max = 300.dp)
             .padding(vertical = 6.dp),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(14.dp),
         color = CardBackground,
         border = BorderStroke(1.dp, CardDivider),
-        shadowElevation = 2.dp
+        shadowElevation = 0.dp
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
+// Compose modifier chain: layout flags are applied from left to right, producing the final size/padding/scroll behavior.
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
@@ -90,6 +110,7 @@ fun RequestedTripsCard(
                     Spacer(Modifier.height(2.dp))
                     Text(
                         text = trip.tripType
+// Safe chain: each `?.` step runs only if the receiver is non-null; a null earlier in the chain skips the remaining chain safely.
                             ?.replace("_", " ")
                             ?.lowercase()
                             ?.replaceFirstChar { it.titlecase() }
@@ -127,6 +148,7 @@ fun RequestedTripsCard(
             Spacer(Modifier.height(14.dp))
 
             Row(
+// Compose modifier chain: layout flags are applied from left to right, producing the final size/padding/scroll behavior.
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -147,6 +169,7 @@ fun RequestedTripsCard(
                 Spacer(Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
+// Elvis fallback: `?:` evaluates the left side; if it is null, Kotlin evaluates and returns the right-side value.
                         text = trip.customerName ?: "Customer",
                         color = CardBlack,
                         fontSize = 13.sp,
@@ -154,7 +177,10 @@ fun RequestedTripsCard(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
+// Delegation: `by` forwards property get/set behavior to the object on the right instead of storing the value directly here.
+// Read-only property: `val` binds the value once. Later reassignment of this property name is prevented by Kotlin.
                     val phone = trip.customerPhone
+// `if` guard: the following block executes only while `!phone.isNullOrEmpty()` evaluates to `true`; a false result skips it.
                     if (!phone.isNullOrEmpty()) {
                         Text(
                             text = phone,
@@ -173,8 +199,8 @@ fun RequestedTripsCard(
                 onClick = onViewClick,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp),
-                shape = RoundedCornerShape(10.dp),
+                    .height(46.dp),
+                shape = RoundedCornerShape(8.dp),
                 elevation = null,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = CardBlack,
@@ -187,11 +213,18 @@ fun RequestedTripsCard(
     }
 }
 
+// Compose entry: recomposition invokes this function to describe the current UI state.
 @Composable
+// Function `RequestedRouteSpine`: normal synchronous execution is used unless the body starts a coroutine itself.
 fun RequestedRouteSpine(stops: List<Stop>) {
+// Delegation: `by` forwards property get/set behavior to the object on the right instead of storing the value directly here.
+// Read-only property: `val` binds the value once. Later reassignment of this property name is prevented by Kotlin.
     val visibleStops = stops.take(2)
+// Delegation: `by` forwards property get/set behavior to the object on the right instead of storing the value directly here.
+// Read-only property: `val` binds the value once. Later reassignment of this property name is prevented by Kotlin.
     val hiddenCount = stops.size - visibleStops.size
 
+// Compose modifier chain: layout flags are applied from left to right, producing the final size/padding/scroll behavior.
     Column(modifier = Modifier.fillMaxWidth()) {
         visibleStops.forEachIndexed { index, stop ->
             RouteStopRow(
@@ -199,7 +232,9 @@ fun RequestedRouteSpine(stops: List<Stop>) {
                 showConnector = index < visibleStops.lastIndex || hiddenCount > 0
             )
         }
+// `if` guard: the following block executes only while `hiddenCount > 0` evaluates to `true`; a false result skips it.
         if (hiddenCount > 0) {
+// Compose modifier chain: layout flags are applied from left to right, producing the final size/padding/scroll behavior.
             Row(modifier = Modifier.fillMaxWidth()) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -208,6 +243,7 @@ fun RequestedRouteSpine(stops: List<Stop>) {
                     Box(
                         modifier = Modifier
                             .size(6.dp)
+// Immutable update: `copy` creates a new data-class instance while replacing only the named properties.
                             .background(CardBlack.copy(alpha = 0.35f), CircleShape)
                     )
                 }
@@ -223,8 +259,12 @@ fun RequestedRouteSpine(stops: List<Stop>) {
     }
 }
 
+// Compose entry: recomposition invokes this function to describe the current UI state.
 @Composable
+// Function `RouteStopRow`: normal synchronous execution is used unless the body starts a coroutine itself; `private` limits access to this file/type scope.
 private fun RouteStopRow(stop: Stop, showConnector: Boolean) {
+// Delegation: `by` forwards property get/set behavior to the object on the right instead of storing the value directly here.
+// Read-only property: `val` binds the value once. Later reassignment of this property name is prevented by Kotlin.
     val isPickup = stop.type == StopType.PICKUP
 
     Row(
@@ -244,11 +284,13 @@ private fun RouteStopRow(stop: Stop, showConnector: Boolean) {
                     .size(10.dp)
                     .background(CardBlack, if (isPickup) CircleShape else RoundedCornerShape(2.dp))
             )
+// `if` guard: the following block executes only while `showConnector` evaluates to `true`; a false result skips it.
             if (showConnector) {
                 Box(
                     modifier = Modifier
                         .width(1.5.dp)
                         .weight(1f)
+// Immutable update: `copy` creates a new data-class instance while replacing only the named properties.
                         .background(CardBlack.copy(alpha = 0.25f))
                 )
             }
@@ -278,12 +320,17 @@ private fun RouteStopRow(stop: Stop, showConnector: Boolean) {
     }
 }
 
+// Compose entry: recomposition invokes this function to describe the current UI state.
 @Composable
+// Function `RequestedTripsSection`: normal synchronous execution is used unless the body starts a coroutine itself.
 fun RequestedTripsSection(
+// Default dependency: if the caller omits this parameter, Hilt creates or retrieves the ViewModel for this Compose destination.
     viewModel: TripRequestsViewModel = hiltViewModel(),
     onViewClick: (Trip) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+// Delegated property: `by` delegates reading/writing to the expression to the right. The delegate owns storage and observation semantics.
+// State bridge: `collectAsState()` observes the Flow and exposes its latest value as Compose state, so the UI recomposes on each emission.
     val uiState by viewModel.uiState.collectAsState()
 
     Column(
@@ -292,13 +339,15 @@ fun RequestedTripsSection(
         Text(
             text = "Trip Requests",
             color = CardBlack,
-            fontSize = 17.sp,
+            fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(start = 16.dp, top = 8.dp, bottom = 8.dp)
         )
 
         Spacer(modifier = Modifier.height(4.dp))
 
+// `when` branch selection: Kotlin evaluates conditions in source order and executes only the first matching branch.
+// Branch expression: `when` is an expression and selects the first branch whose condition matches the current state.
         when {
             uiState.isLoading -> {
                 Box(
@@ -323,6 +372,7 @@ fun RequestedTripsSection(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
+// Explicit non-null assertion: `!!` tells Kotlin the value cannot be null; null at runtime throws an exception instead.
                         text = uiState.error!!,
                         color = CardBlack,
                         fontSize = 13.sp,
@@ -331,7 +381,7 @@ fun RequestedTripsSection(
                     Spacer(Modifier.height(16.dp))
                     Button(
                         onClick = { viewModel.fetchTripRequests() },
-                        shape = RoundedCornerShape(10.dp),
+                        shape = RoundedCornerShape(8.dp),
                         elevation = null,
                         colors = ButtonDefaults.buttonColors(
                             containerColor = CardBlack,
@@ -355,8 +405,10 @@ fun RequestedTripsSection(
                 )
             }
 
+// `else` fallback: this block runs only when the preceding `if` condition did not match.
             else -> {
                 LazyRow(
+// Compose modifier chain: layout flags are applied from left to right, producing the final size/padding/scroll behavior.
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)

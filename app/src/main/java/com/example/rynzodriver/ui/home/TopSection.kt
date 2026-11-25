@@ -1,5 +1,11 @@
 package com.example.rynzodriver.ui.home
 
+// Senior explanation:
+// Driver dashboard state, location monitoring, vehicle selection, and home navigation.
+// Read top-down: imports provide dependencies, declarations define state/contracts, and the function body coordinates them.
+
+
+// Jetpack Compose imports: declarative UI containers, state, modifiers, colors, and widgets.
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -38,14 +44,22 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-private val HeaderBlue = Color(0xFF4580F4)
+// Immutable configuration: `val` gives this value one read-only binding; the expression is resolved when execution reaches this line.
+private val HeaderBlue = Color(0xFF276EF1)
+// Immutable configuration: `val` gives this value one read-only binding; the expression is resolved when execution reaches this line.
 private val HeaderWhite = Color(0xFFFFFFFF)
+// Immutable configuration: `val` gives this value one read-only binding; the expression is resolved when execution reaches this line.
 private val HeaderBlack = Color(0xFF000000)
+// Immutable configuration: `val` gives this value one read-only binding; the expression is resolved when execution reaches this line.
 private val HeaderGray = Color(0xFF6B6B6B)
+// Immutable configuration: `val` gives this value one read-only binding; the expression is resolved when execution reaches this line.
 private val OnlineGreen = Color(0xFF05A357)
+// Immutable configuration: `val` gives this value one read-only binding; the expression is resolved when execution reaches this line.
 private val OfflineGray = Color(0xFFBDBDBD)
 
+// Compose entry: recomposition invokes this function to describe the current UI state.
 @Composable
+// Function `TopSection`: normal synchronous execution is used unless the body starts a coroutine itself.
 fun TopSection(
     viewModel: HomeViewModel,
     appName: String = "Rynzo",
@@ -56,10 +70,20 @@ fun TopSection(
     onSelectVehicleClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+// Delegated property: `by` delegates reading/writing to the expression to the right. The delegate owns storage and observation semantics.
+// State bridge: `collectAsState()` observes the Flow and exposes its latest value as Compose state, so the UI recomposes on each emission.
     val uiState by viewModel.uiState.collectAsState()
+// Delegation: `by` forwards property get/set behavior to the object on the right instead of storing the value directly here.
+// Read-only property: `val` binds the value once. Later reassignment of this property name is prevented by Kotlin.
     val isOnDuty = uiState.isOnDuty
+// Delegation: `by` forwards property get/set behavior to the object on the right instead of storing the value directly here.
+// Read-only property: `val` binds the value once. Later reassignment of this property name is prevented by Kotlin.
     val isTripActive = uiState.isTripActive
+// Delegation: `by` forwards property get/set behavior to the object on the right instead of storing the value directly here.
+// Read-only property: `val` binds the value once. Later reassignment of this property name is prevented by Kotlin.
+// Safe-call chain: `?.let` runs the block only when the receiver is non-null; inside the block `it` is the non-null value.
     val selectedVehicleName = viewModel.selectedVehicle?.let { vehicle ->
+// Safe search: `firstOrNull` returns the first matching item or null when no item satisfies the condition.
         listOfNotNull(vehicle.vehicleModel, vehicle.vehicleNumber).firstOrNull { it.isNotBlank() }
             ?: "Vehicle ${vehicle.id.take(4)}"
     }
@@ -67,7 +91,7 @@ fun TopSection(
     Surface(
         modifier = modifier.fillMaxWidth(),
         color = HeaderBlue,
-        shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)
+        shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)
     ) {
         Column(
             modifier = Modifier
@@ -76,72 +100,78 @@ fun TopSection(
                 .padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 20.dp)
         ) {
             Row(
+// Compose modifier chain: layout flags are applied from left to right, producing the final size/padding/scroll behavior.
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = appName,
                     color = HeaderWhite,
-                    fontSize = 18.sp,
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.ExtraBold,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
                 )
 
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(HeaderWhite.copy(alpha = 0.16f))
-                        .clickable(onClick = onNotificationsClick),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Notifications,
-                        contentDescription = "Notifications",
-                        tint = HeaderWhite,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+// Immutable update: `copy` creates a new data-class instance while replacing only the named properties.
+                            .background(HeaderWhite.copy(alpha = 0.16f))
+                            .clickable(onClick = onNotificationsClick),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Notifications,
+                            contentDescription = "Notifications",
+                            tint = HeaderWhite,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
 
-                Spacer(Modifier.width(10.dp))
-
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .background(HeaderWhite, CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = userName.trim().firstOrNull()?.uppercase() ?: "D",
-                        color = HeaderBlue,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .background(HeaderWhite, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+// Elvis fallback: `?:` evaluates the left side; if it is null, Kotlin evaluates and returns the right-side value.
+                            text = userName.trim().firstOrNull()?.uppercase() ?: "D",
+                            color = HeaderBlue,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
 
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(18.dp))
 
             Text(
                 text = "Hello,",
-                color = HeaderWhite.copy(alpha = 0.75f),
-                fontSize = 12.sp,
+// Immutable update: `copy` creates a new data-class instance while replacing only the named properties.
+                color = HeaderWhite.copy(alpha = 0.72f),
+                fontSize = 13.sp,
                 fontWeight = FontWeight.Medium
             )
             Spacer(Modifier.height(2.dp))
             Text(
                 text = userName,
                 color = HeaderWhite,
-                fontSize = 24.sp,
+                fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
 
-            Spacer(Modifier.height(18.dp))
+            Spacer(Modifier.height(16.dp))
 
             Surface(
+// Compose modifier chain: layout flags are applied from left to right, producing the final size/padding/scroll behavior.
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(14.dp),
                 color = HeaderWhite
@@ -184,6 +214,8 @@ fun TopSection(
                         }
                     }
 
+                    Spacer(Modifier.width(12.dp))
+
                     Switch(
                         checked = isOnDuty,
                         enabled = !isTripActive,
@@ -200,28 +232,28 @@ fun TopSection(
                 }
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(12.dp))
 
             OutlinedButton(
                 onClick = onSelectVehicleClick,
                 enabled = !isTripActive,
-                modifier = Modifier.fillMaxWidth(),
+// Compose modifier chain: layout flags are applied from left to right, producing the final size/padding/scroll behavior.
+                modifier = Modifier.fillMaxWidth().height(52.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.outlinedButtonColors(
                     containerColor = HeaderWhite,
                     contentColor = HeaderBlue
                 ),
-                border = androidx.compose.foundation.BorderStroke(
-                    1.dp,
-                    HeaderWhite.copy(alpha = 0.5f)
-                )
+                border = androidx.compose.foundation.BorderStroke(1.dp, HeaderWhite)
             ) {
                 Row(
+// Compose modifier chain: layout flags are applied from left to right, producing the final size/padding/scroll behavior.
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Row(
+                        modifier = Modifier.weight(1f),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
@@ -231,7 +263,8 @@ fun TopSection(
                         )
                         Spacer(Modifier.width(8.dp))
                         Text(
-                            text = if (isTripActive) "${selectedVehicleName ?: "Vehicle"} (On Trip)" else selectedVehicleName ?: "Select vehicle",
+// Elvis fallback: `?:` evaluates the left side; if it is null, Kotlin evaluates and returns the right-side value.
+                            text = if (isTripActive) "${selectedVehicleName ?: "Vehicle"} · On trip" else selectedVehicleName ?: "Select vehicle",
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold,
                             maxLines = 1,
@@ -239,6 +272,7 @@ fun TopSection(
                         )
                     }
 
+                    Spacer(Modifier.width(8.dp))
                     Text(
                         text = if (isTripActive) "Locked" else "Change",
                         fontSize = 11.sp,
@@ -247,39 +281,27 @@ fun TopSection(
                 }
             }
 
+// `if` guard: the following block executes only while `isOnDuty` evaluates to `true`; a false result skips it.
             if (isOnDuty) {
                 Spacer(Modifier.height(12.dp))
-                Column(
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(HeaderWhite.copy(alpha = 0.16f), RoundedCornerShape(12.dp))
-                        .padding(horizontal = 12.dp, vertical = 10.dp)
+// Immutable update: `copy` creates a new data-class instance while replacing only the named properties.
+                        .background(HeaderWhite.copy(alpha = 0.14f), RoundedCornerShape(12.dp))
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.LocationOn,
-                            contentDescription = null,
-                            tint = HeaderWhite,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            text = "Current: $currentLocation",
-                            color = HeaderWhite,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Medium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-
-                    Spacer(Modifier.height(6.dp))
-
+                    Icon(
+                        imageVector = Icons.Default.LocationOn,
+                        contentDescription = null,
+                        tint = HeaderWhite,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.width(8.dp))
                     Text(
-                        text = "Last: $lastLocation",
-                        color = HeaderWhite.copy(alpha = 0.9f),
+                        text = "$currentLocation",
+                        color = HeaderWhite,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Medium,
                         maxLines = 1,

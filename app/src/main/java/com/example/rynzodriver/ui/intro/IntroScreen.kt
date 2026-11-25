@@ -1,5 +1,12 @@
 package com.example.rynzodriver.ui.intro
 
+// Senior explanation:
+// Initial welcome presentation and continuation action.
+// Read top-down: imports provide dependencies, declarations define state/contracts, and the function body coordinates them.
+
+// File purpose: This file implements the introductory welcome screen.
+
+// Jetpack Compose imports: declarative UI containers, state, modifiers, colors, and widgets.
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,7 +19,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+// Compose entry: recomposition invokes this function to describe the current UI state.
 @Composable
+// Function `IntroScreen`: normal synchronous execution is used unless the body starts a coroutine itself.
 fun IntroScreen(onContinue: () -> Unit) {
     Box(
         modifier = Modifier
@@ -30,6 +39,7 @@ fun IntroScreen(onContinue: () -> Unit) {
             ) {
                 Text(
                     text = "RYNZO",
+// Immutable update: `copy` creates a new data-class instance while replacing only the named properties.
                     style = MaterialTheme.typography.displayMedium.copy(
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 4.sp
@@ -40,6 +50,7 @@ fun IntroScreen(onContinue: () -> Unit) {
                 Text(
                     text = "Logistics Redefined.",
                     style = MaterialTheme.typography.headlineSmall,
+// Immutable update: `copy` creates a new data-class instance while replacing only the named properties.
                     color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
                 )
             }
@@ -51,6 +62,7 @@ fun IntroScreen(onContinue: () -> Unit) {
                 Text(
                     text = "Drive with Rynzo. Move the world.",
                     style = MaterialTheme.typography.bodyLarge,
+// Immutable update: `copy` creates a new data-class instance while replacing only the named properties.
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                     modifier = Modifier.padding(bottom = 48.dp)
                 )
@@ -68,6 +80,7 @@ fun IntroScreen(onContinue: () -> Unit) {
                 ) {
                     Text(
                         text = "Get Started",
+// Immutable update: `copy` creates a new data-class instance while replacing only the named properties.
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                     )
                 }

@@ -1,5 +1,12 @@
 package com.example.rynzodriver.ui.companyTrips
 
+// Senior explanation:
+// Company-trip cards, route presentation, and company-run start flow.
+// Read top-down: imports provide dependencies, declarations define state/contracts, and the function body coordinates them.
+
+// File purpose: This file implements company-trip cards and company-trip detail UI.
+
+// Jetpack Compose imports: declarative UI containers, state, modifiers, colors, and widgets.
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -38,46 +45,83 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+// Project imports: shared domain, data, UI, navigation, or utility types from this app.
 import com.example.rynzodriver.data.dto.company.CompanyTripDto
 
+// Immutable configuration: `val` gives this value one read-only binding; the expression is resolved when execution reaches this line.
 private val CardBackground = Color(0xFFFFFFFF)
+// Immutable configuration: `val` gives this value one read-only binding; the expression is resolved when execution reaches this line.
 private val CardText = Color(0xFF111111)
+// Immutable configuration: `val` gives this value one read-only binding; the expression is resolved when execution reaches this line.
 private val CardSecondary = Color(0xFF737373)
+// Immutable configuration: `val` gives this value one read-only binding; the expression is resolved when execution reaches this line.
 private val CardDivider = Color(0xFFEAEAEA)
+// Immutable configuration: `val` gives this value one read-only binding; the expression is resolved when execution reaches this line.
 private val CardSurface = Color(0xFFF6F6F6)
 
+// Data model: `CompanyTripUiModel` automatically provides `toString`, `copy`, equality, and hash behavior for these immutable constructor properties.
 data class CompanyTripUiModel(
+// Delegation: `by` forwards property get/set behavior to the object on the right instead of storing the value directly here.
+// Read-only property: `val` binds the value once. Later reassignment of this property name is prevented by Kotlin.
     val id: String,
+// Delegation: `by` forwards property get/set behavior to the object on the right instead of storing the value directly here.
+// Read-only property: `val` binds the value once. Later reassignment of this property name is prevented by Kotlin.
     val routeId: String,
+// Delegation: `by` forwards property get/set behavior to the object on the right instead of storing the value directly here.
+// Read-only property: `val` binds the value once. Later reassignment of this property name is prevented by Kotlin.
     val vehicleId: String,
+// Delegation: `by` forwards property get/set behavior to the object on the right instead of storing the value directly here.
+// Read-only property: `val` binds the value once. Later reassignment of this property name is prevented by Kotlin.
     val driverId: String,
+// Delegation: `by` forwards property get/set behavior to the object on the right instead of storing the value directly here.
+// Read-only property: `val` binds the value once. Later reassignment of this property name is prevented by Kotlin.
     val title: String,
+// Delegation: `by` forwards property get/set behavior to the object on the right instead of storing the value directly here.
+// Read-only property: `val` binds the value once. Later reassignment of this property name is prevented by Kotlin.
     val vehicleLabel: String,
+// Delegation: `by` forwards property get/set behavior to the object on the right instead of storing the value directly here.
+// Read-only property: `val` binds the value once. Later reassignment of this property name is prevented by Kotlin.
     val stops: List<String>
 )
 
+// Function `CompanyTripDto.toUiModel`: normal synchronous execution is used unless the body starts a coroutine itself.
 fun CompanyTripDto.toUiModel(): CompanyTripUiModel {
+// Delegation: `by` forwards property get/set behavior to the object on the right instead of storing the value directly here.
+// Read-only property: `val` binds the value once. Later reassignment of this property name is prevented by Kotlin.
     val vehicleNumber = vehicle?.vehicleNumber?.trim().orEmpty()
+// Delegation: `by` forwards property get/set behavior to the object on the right instead of storing the value directly here.
+// Read-only property: `val` binds the value once. Later reassignment of this property name is prevented by Kotlin.
     val vehicleModel = vehicle?.vehicleModel?.trim().orEmpty()
 
+// Delegation: `by` forwards property get/set behavior to the object on the right instead of storing the value directly here.
+// Read-only property: `val` binds the value once. Later reassignment of this property name is prevented by Kotlin.
     val vehicleDisplay = listOfNotNull(
         vehicleNumber.ifBlank { null },
         vehicleModel.ifBlank { null }
     ).joinToString(" • ")
+// Elvis fallback: `?:` evaluates the left side; if it is null, Kotlin evaluates and returns the right-side value.
         .ifBlank { "Vehicle ${vehicleId?.take(6) ?: "assigned"}" }
 
+// Delegation: `by` forwards property get/set behavior to the object on the right instead of storing the value directly here.
+// Read-only property: `val` binds the value once. Later reassignment of this property name is prevented by Kotlin.
     val routeTitle = listOf(
         routeName,
         title,
         name,
         tripType,
         type
+// Validation: `isNullOrBlank()` is true for null, an empty string, or a string containing only whitespace.
     ).firstOrNull { !it.isNullOrBlank() }
         ?: if (isDailyTrip == true) "Daily route" else "Company trip"
 
+// Delegation: `by` forwards property get/set behavior to the object on the right instead of storing the value directly here.
     // Keep every named stop in the order supplied by the API.
+// Delegation: `by` forwards property get/set behavior to the object on the right instead of storing the value directly here.
+// Read-only property: `val` binds the value once. Later reassignment of this property name is prevented by Kotlin.
+// Filtered transformation: `mapNotNull` transforms each item and excludes results that are null.
     val routeStops = stops.mapNotNull { stop ->
         stop.locationName?.trim()?.takeIf { it.isNotBlank() }
+// Collection/optional fallback: `ifEmpty` supplies the alternate value only when the collection or string is empty.
     }.ifEmpty {
         listOfNotNull(
             pickupLocation?.locationName?.trim()?.takeIf { it.isNotBlank() }
@@ -85,14 +129,19 @@ fun CompanyTripDto.toUiModel(): CompanyTripUiModel {
             dropoffLocation?.locationName?.trim()?.takeIf { it.isNotBlank() }
                 ?: dropoffLocation?.name?.trim()?.takeIf { it.isNotBlank() }
         )
+// Collection/optional fallback: `ifEmpty` supplies the alternate value only when the collection or string is empty.
     }.ifEmpty {
         listOf("Stops not available")
     }
 
+// `return` control: execution leaves this function immediately; a labeled return can leave a lambda instead.
     return CompanyTripUiModel(
         id = id,
+// Elvis fallback: `?:` evaluates the left side; if it is null, Kotlin evaluates and returns the right-side value.
         routeId = routeId ?: id,
+// Elvis fallback: `?:` evaluates the left side; if it is null, Kotlin evaluates and returns the right-side value.
         vehicleId = vehicleId ?: vehicle?.id ?: "",
+// Elvis fallback: `?:` evaluates the left side; if it is null, Kotlin evaluates and returns the right-side value.
         driverId = driverId ?: "",
         title = routeTitle,
         vehicleLabel = vehicleDisplay,
@@ -100,7 +149,9 @@ fun CompanyTripDto.toUiModel(): CompanyTripUiModel {
     )
 }
 
+// Compose entry: recomposition invokes this function to describe the current UI state.
 @Composable
+// Function `CompanyTripsSection`: normal synchronous execution is used unless the body starts a coroutine itself.
 fun CompanyTripsSection(
     trips: List<CompanyTripUiModel>,
     isLoading: Boolean = false,
@@ -112,11 +163,13 @@ fun CompanyTripsSection(
         Text(
             text = "Company trips",
             color = CardText,
-            fontSize = 20.sp,
+            fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(start = 16.dp, top = 12.dp, bottom = 10.dp)
         )
 
+// `when` branch selection: Kotlin evaluates conditions in source order and executes only the first matching branch.
+// Branch expression: `when` is an expression and selects the first branch whose condition matches the current state.
         when {
             isLoading -> {
                 Box(
@@ -133,6 +186,7 @@ fun CompanyTripsSection(
                 }
             }
 
+// Validation: `isNullOrBlank()` is true for null, an empty string, or a string containing only whitespace.
             !error.isNullOrBlank() -> {
                 Text(
                     text = error,
@@ -153,8 +207,10 @@ fun CompanyTripsSection(
                 )
             }
 
+// `else` fallback: this block runs only when the preceding `if` condition did not match.
             else -> {
                 LazyRow(
+// Compose modifier chain: layout flags are applied from left to right, producing the final size/padding/scroll behavior.
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
@@ -171,7 +227,9 @@ fun CompanyTripsSection(
     }
 }
 
+// Compose entry: recomposition invokes this function to describe the current UI state.
 @Composable
+// Function `CompanyTripCard`: normal synchronous execution is used unless the body starts a coroutine itself.
 fun CompanyTripCard(
     trip: CompanyTripUiModel,
     onViewClick: () -> Unit,
@@ -179,12 +237,12 @@ fun CompanyTripCard(
 ) {
     Surface(
         modifier = modifier
-            .width(310.dp)
-            .padding(vertical = 5.dp),
-        shape = RoundedCornerShape(18.dp),
+            .width(300.dp)
+            .padding(vertical = 4.dp),
+        shape = RoundedCornerShape(14.dp),
         color = CardBackground,
         border = BorderStroke(1.dp, CardDivider),
-        shadowElevation = 1.dp
+        shadowElevation = 0.dp
     ) {
         Column(modifier = Modifier.padding(18.dp)) {
             Text(
@@ -235,6 +293,7 @@ fun CompanyTripCard(
 
             Spacer(Modifier.height(12.dp))
 
+// Compose modifier chain: layout flags are applied from left to right, producing the final size/padding/scroll behavior.
             Column(modifier = Modifier.fillMaxWidth()) {
                 trip.stops.forEachIndexed { index, stop ->
                     CompanyStopRow(
@@ -253,8 +312,8 @@ fun CompanyTripCard(
                 onClick = onViewClick,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp),
-                shape = RoundedCornerShape(50),
+                    .height(46.dp),
+                shape = RoundedCornerShape(8.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = CardText,
                     contentColor = CardBackground
@@ -271,7 +330,9 @@ fun CompanyTripCard(
     }
 }
 
+// Compose entry: recomposition invokes this function to describe the current UI state.
 @Composable
+// Function `CompanyStopRow`: normal synchronous execution is used unless the body starts a coroutine itself; `private` limits access to this file/type scope.
 private fun CompanyStopRow(
     stopName: String,
     stopNumber: Int,
@@ -299,6 +360,7 @@ private fun CompanyStopRow(
                     ),
                 contentAlignment = Alignment.Center
             ) {
+// `if` guard: the following block executes only while `stopNumber == 1` evaluates to `true`; a false result skips it.
                 if (stopNumber == 1) {
                     Icon(
                         imageVector = Icons.Default.LocationOn,
@@ -316,6 +378,7 @@ private fun CompanyStopRow(
                 }
             }
 
+// `if` guard: the following block executes only while `!isLast` evaluates to `true`; a false result skips it.
             if (!isLast) {
                 Box(
                     modifier = Modifier
@@ -338,6 +401,7 @@ private fun CompanyStopRow(
                 text = when {
                     stopNumber == 1 -> "PICKUP"
                     isLast -> "FINAL STOP"
+// `else` fallback: this block runs only when the preceding `if` condition did not match.
                     else -> "STOP $stopNumber"
                 },
                 color = CardSecondary,
@@ -359,9 +423,12 @@ private fun CompanyStopRow(
     }
 }
 
+// Compose entry: recomposition invokes this function to describe the current UI state.
 @Composable
+// Function `CompanyTripsPlaceholder`: normal synchronous execution is used unless the body starts a coroutine itself.
 fun CompanyTripsPlaceholder() {
     Box(
+// Compose modifier chain: layout flags are applied from left to right, producing the final size/padding/scroll behavior.
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {

@@ -1,5 +1,12 @@
 package com.example.rynzodriver.ui.login
 
+// Senior explanation:
+// Login form state, credential submission, and authentication UI feedback.
+// Read top-down: imports provide dependencies, declarations define state/contracts, and the function body coordinates them.
+
+// File purpose: This file implements login UI and login ViewModel behavior.
+
+// Jetpack Compose imports: declarative UI containers, state, modifiers, colors, and widgets.
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -14,20 +21,34 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+// Hilt imports: dependency injection annotations and ViewModel integration.
 import androidx.hilt.navigation.compose.hiltViewModel
 
+// Delegation: `by` forwards property get/set behavior to the object on the right instead of storing the value directly here.
+// Opt-in boundary: this declaration intentionally uses an API marked experimental by the library.
 @OptIn(ExperimentalMaterial3Api::class)
+// Compose entry: recomposition invokes this function to describe the current UI state.
 @Composable
+// Function `LoginScreen`: normal synchronous execution is used unless the body starts a coroutine itself.
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
+// Default dependency: if the caller omits this parameter, Hilt creates or retrieves the ViewModel for this Compose destination.
     viewModel: LoginViewModel = hiltViewModel()
 ) {
+// Mutable property: `var` permits reassignment. Any observer is responsible for reacting if this value changes.
+// Delegation: `by` forwards property get/set behavior to the object on the right instead of storing the value directly here.
     var mobile by remember { mutableStateOf("") }
+// Mutable property: `var` permits reassignment. Any observer is responsible for reacting if this value changes.
+// Delegation: `by` forwards property get/set behavior to the object on the right instead of storing the value directly here.
     var password by remember { mutableStateOf("") }
     
+// Delegated property: `by` delegates reading/writing to the expression to the right. The delegate owns storage and observation semantics.
+// State bridge: `collectAsState()` observes the Flow and exposes its latest value as Compose state, so the UI recomposes on each emission.
     val uiState by viewModel.uiState.collectAsState()
 
+// Side-effect lifecycle: this coroutine runs when the Composable enters or when any key in parentheses changes.
     LaunchedEffect(uiState.isSuccess) {
+// `if` guard: the following block executes only while `uiState.isSuccess` evaluates to `true`; a false result skips it.
         if (uiState.isSuccess) {
             onLoginSuccess()
             viewModel.resetState()
@@ -53,6 +74,7 @@ fun LoginScreen(
             
             Text(
                 text = "Welcome back",
+// Immutable update: `copy` creates a new data-class instance while replacing only the named properties.
                 style = MaterialTheme.typography.headlineLarge.copy(
                     fontWeight = FontWeight.Medium,
                     color = Color.Black,
@@ -69,8 +91,10 @@ fun LoginScreen(
                 onPasswordChange = { password = it }
             )
 
+// `if` guard: the following block executes only while `uiState.error != null` evaluates to `true`; a false result skips it.
             if (uiState.error != null) {
                 Text(
+// Explicit non-null assertion: `!!` tells Kotlin the value cannot be null; null at runtime throws an exception instead.
                     text = uiState.error!!,
                     color = Color.Red,
                     style = MaterialTheme.typography.bodySmall,
@@ -96,6 +120,7 @@ fun LoginScreen(
                 ),
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
             ) {
+// `if` guard: the following block executes only while `uiState.isLoading` evaluates to `true`; a false result skips it.
                 if (uiState.isLoading) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(24.dp), 
@@ -105,6 +130,7 @@ fun LoginScreen(
                 } else {
                     Text(
                         text = "Log in", 
+// Immutable update: `copy` creates a new data-class instance while replacing only the named properties.
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 18.sp
@@ -118,7 +144,9 @@ fun LoginScreen(
     }
 }
 
+// Compose entry: recomposition invokes this function to describe the current UI state.
 @Composable
+// Function `CredentialsSection`: normal synchronous execution is used unless the body starts a coroutine itself.
 fun CredentialsSection(
     mobile: String,
     onMobileChange: (String) -> Unit,
@@ -145,7 +173,9 @@ fun CredentialsSection(
     }
 }
 
+// Compose entry: recomposition invokes this function to describe the current UI state.
 @Composable
+// Function `UberTextField`: normal synchronous execution is used unless the body starts a coroutine itself.
 fun UberTextField(
     value: String,
     onValueChange: (String) -> Unit,
@@ -159,6 +189,7 @@ fun UberTextField(
             onValueChange = onValueChange,
             placeholder = { Text(text = label, color = Color.LightGray) },
             visualTransformation = visualTransformation,
+// Compose modifier chain: layout flags are applied from left to right, producing the final size/padding/scroll behavior.
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
             shape = RoundedCornerShape(8.dp),
